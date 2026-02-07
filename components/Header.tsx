@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { WalletButton } from "./WalletButton";
 
 const socialLinks = [
   { href: "https://twitter.com", label: "Twitter", icon: "𝕏" },
@@ -58,14 +59,7 @@ export function Header() {
               </a>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => {}}
-            className="rounded-lg bg-[var(--accent)] px-3 py-2 text-xs font-medium text-black transition-all hover:bg-[var(--accent-muted)] active:scale-[0.98] sm:px-4 sm:text-sm"
-          >
-            <span className="hidden sm:inline">Connect Wallet</span>
-            <span className="sm:hidden">Connect</span>
-          </button>
+          <WalletButton />
         </div>
       </div>
     </header>
