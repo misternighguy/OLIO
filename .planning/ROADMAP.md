@@ -57,7 +57,11 @@ Plans:
   3. Motherlode triggers dramatic full-screen moment
   4. All interactive elements have hover/active states
   5. Loading states are polished
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01: Flip animation + outcome visuals + interaction polish
+- [ ] 03-02: Motherlode overlay + loading state polish
 
 ### Phase 4: Live Features
 **Goal**: Real-time chat and stats panel with How It Works modal
@@ -99,7 +103,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2025-02-06 |
 | 2. Game Core | 2/2 | Complete | 2025-02-07 |
-| 3. Visual Polish | 0/? | Not started | - |
+| 3. Visual Polish | 0/2 | Not started | - |
 | 4. Live Features | 0/? | Not started | - |
 | 5. Secondary Pages | 0/? | Not started | - |
 | 6. Refinement | 0/? | Not started | - |
