@@ -11,31 +11,31 @@ const socialLinks = [
 export function Header() {
   return (
     <header className="sticky top-0 z-10 border-b border-white/5 bg-[var(--bg-primary)]/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6">
+      <div className="mx-auto flex h-14 max-w-7xl min-w-0 items-center justify-between gap-2 px-3 sm:px-4 md:px-6">
         {/* Left: Logo + Nav */}
-        <div className="flex items-center gap-8">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 md:gap-8">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xl font-bold tracking-tight text-[var(--text-primary)] transition-opacity hover:opacity-90"
+            className="shrink-0 text-lg font-bold tracking-tight text-[var(--text-primary)] transition-opacity hover:opacity-90 sm:text-xl"
           >
             <span className="text-[var(--accent)]">OIL</span>
           </Link>
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="flex shrink-0 items-center gap-2 sm:gap-4 md:gap-6">
             <Link
               href="/about"
-              className="text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              className="whitespace-nowrap text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:text-sm"
             >
               About
             </Link>
             <Link
               href="/explore"
-              className="text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              className="whitespace-nowrap text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:text-sm"
             >
               Explore
             </Link>
             <Link
               href="/docs"
-              className="text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              className="whitespace-nowrap text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:text-sm"
             >
               Docs
             </Link>
@@ -43,8 +43,8 @@ export function Header() {
         </div>
 
         {/* Right: Social + Wallet */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-4">
+          <div className="hidden items-center gap-2 sm:flex">
             {socialLinks.map(({ href, label, icon }) => (
               <a
                 key={label}
@@ -61,9 +61,10 @@ export function Header() {
           <button
             type="button"
             onClick={() => {}}
-            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-black transition-all hover:bg-[var(--accent-muted)] active:scale-[0.98]"
+            className="rounded-lg bg-[var(--accent)] px-3 py-2 text-xs font-medium text-black transition-all hover:bg-[var(--accent-muted)] active:scale-[0.98] sm:px-4 sm:text-sm"
           >
-            Connect Wallet
+            <span className="hidden sm:inline">Connect Wallet</span>
+            <span className="sm:hidden">Connect</span>
           </button>
         </div>
       </div>

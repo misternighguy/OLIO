@@ -21,6 +21,14 @@ export interface GameState {
   balance: number;
   sessionPnl: number;
   tilesFlipped: number;
+  showMotherlode: boolean;
+  motherlodeAmount: number;
+  /** Mocked: Motherlode pool size (10% of volume) */
+  motherlodePool: number;
+  /** Mocked: OIL Reserve (30% of volume) */
+  oilReserve: number;
+  /** Mocked: Payout Reserve (60% of volume) */
+  payoutReserve: number;
 }
 
 interface GameContextValue extends GameState {
@@ -34,6 +42,10 @@ interface GameContextValue extends GameState {
   resetSession: () => void;
   onMineAll: (() => void) | null;
   setOnMineAll: (fn: (() => void) | null) => void;
+  onResetAll: (() => void) | null;
+  setOnResetAll: (fn: (() => void) | null) => void;
+  triggerMotherlode: (amount: number) => void;
+  dismissMotherlode: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -47,11 +59,17 @@ const initialState: GameState = {
   balance: 10,
   sessionPnl: 0,
   tilesFlipped: 0,
+  showMotherlode: false,
+  motherlodeAmount: 0,
+  motherlodePool: 12450,
+  oilReserve: 89200,
+  payoutReserve: 178400,
 };
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(initialState);
   const [onMineAll, setOnMineAll] = useState<(() => void) | null>(null);
+  const [onResetAll, setOnResetAll] = useState<(() => void) | null>(null);
 
   const updateSession = useCallback((pnlDelta: number, tilesDelta: number) => {
     setState((s) => ({
@@ -70,6 +88,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const triggerMotherlode = useCallback((amount: number) => {
+    setState((s) => ({
+      ...s,
+      showMotherlode: true,
+      motherlodeAmount: amount,
+    }));
+  }, []);
+
+  const dismissMotherlode = useCallback(() => {
+    setState((s) => ({ ...s, showMotherlode: false }));
+  }, []);
+
   const value: GameContextValue = {
     ...state,
     setCurrency: (c) => setState((s) => ({ ...s, currency: c })),
@@ -84,6 +114,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     resetSession,
     onMineAll,
     setOnMineAll,
+    onResetAll,
+    setOnResetAll,
+    triggerMotherlode,
+    dismissMotherlode,
   };
 
   return (

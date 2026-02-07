@@ -9,6 +9,7 @@ import {
 import { ControlsPanel } from "@/components/ControlsPanel";
 import { DrillingGrid } from "@/components/DrillingGrid";
 import { SessionStats } from "@/components/SessionStats";
+import { ChatPanel } from "@/components/ChatPanel";
 
 export default function Home() {
   return (
@@ -20,7 +21,10 @@ export default function Home() {
         <DrillingGrid />
       </CenterPanel>
       <RightPanel>
-        <SessionStats />
+        <div className="flex flex-col gap-6">
+          <SessionStats />
+          <ChatPanel />
+        </div>
       </RightPanel>
     </GameLayout>
   );

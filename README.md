@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OLIO — OIL Drilling
+
+A Solana-native, oil-mining themed grid game. Drill tiles, hit Oil Fields or Motherlodes, and explore transparent economics (10/30/60 split).
+
+## Features
+
+- **Drilling grid** — 3×3, 4×4, or 5×5 tiles; drill one-by-one or Mine All
+- **Outcomes** — Dry Hole, Oil Field, Refinery, Motherlode
+- **Controls** — Currency (SOL/USDC/USD1), average cost, volatility, chance mode
+- **Live stats** — Motherlode pool, reserves, session P/L
+- **Real-time chat** — Global room (requires socket server)
+- **Explore** — Transparency dashboard, leaderboards, recent rounds
+- **About** — OIL narrative, mechanics, economics
 
 ## Getting Started
 
-First, run the development server:
+### Game only
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The game works without the chat server.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Full features (including chat)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev:all
+```
 
-## Learn More
+Runs Next.js (:3000) and the Socket.io chat server (:3001). Or run in two terminals:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev     # Next.js
+npm run socket  # Chat server
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Environment (optional)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy `.env.example` to `.env.local` and set:
 
-## Deploy on Vercel
+```bash
+NEXT_PUBLIC_SOCKET_URL=https://your-chat-server.com
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Defaults to `http://localhost:3001` when unset.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Build & Deploy
+
+```bash
+npm run build
+npm run start
+```
+
+**Vercel:** The Next.js app deploys directly. Chat requires a separate Socket.io server (e.g. Railway, Render). Point `NEXT_PUBLIC_SOCKET_URL` to it.
+
+## Tech
+
+- Next.js 16 (App Router), React 19, TypeScript, Tailwind 4
+- Socket.io (chat)
+- Mocked game logic for MVP

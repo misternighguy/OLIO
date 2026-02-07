@@ -72,7 +72,11 @@ Plans:
   2. User can send and receive chat messages in real-time
   3. "How it Works" button opens step-by-step modal
   4. Modal has Next/Back navigation through all steps
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 04-01: Stats panel + How It Works modal (Motherlode, reserves, session, modal)
+- [x] 04-02: Real-time chat (ChatPanel, Socket.io)
 
 ### Phase 5: Secondary Pages
 **Goal**: Explore dashboard and Docs/About narrative page
@@ -84,7 +88,11 @@ Plans:
   3. Explore page shows leaderboards
   4. About page explains OIL narrative clearly
   5. About page explains game mechanics and economics
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 05-01: Explore dashboard (live counters, recent rounds, leaderboards)
+- [x] 05-02: About page (OIL narrative, mechanics, economics, Motherlode)
 
 ### Phase 6: Refinement
 **Goal**: Responsive design and final polish across all features
@@ -95,7 +103,11 @@ Plans:
   2. Controls collapse appropriately on smaller screens
   3. All edge cases handled (empty states, loading, errors)
   4. Performance is smooth throughout
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 06-01: Responsive layout (breakpoints, panels, header, grid)
+- [x] 06-02: Edge cases + polish (empty states, loading, errors, modals, performance)
 
 ## Progress
 
@@ -104,6 +116,6 @@ Plans:
 | 1. Foundation | 2/2 | Complete | 2025-02-06 |
 | 2. Game Core | 2/2 | Complete | 2025-02-07 |
 | 3. Visual Polish | 0/2 | Not started | - |
-| 4. Live Features | 0/? | Not started | - |
-| 5. Secondary Pages | 0/? | Not started | - |
-| 6. Refinement | 0/? | Not started | - |
+| 4. Live Features | 0/2 | Not started | - |
+| 5. Secondary Pages | 2/2 | Complete | - |
+| 6. Refinement | 2/2 | Complete | - |
