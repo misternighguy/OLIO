@@ -27,8 +27,8 @@ Build a polished UI/UX for the OIL Drilling game, starting with project foundati
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Project scaffolding — Next.js + Tailwind + dark theme
-- [ ] 01-02: Header component — Logo, nav, social, wallet stub, transitions
+- [x] 01-01: Project scaffolding — Next.js + Tailwind + dark theme
+- [x] 01-02: Header component — Logo, nav, social, wallet stub, transitions
 
 ### Phase 2: Game Core
 **Goal**: Functional drilling grid with all controls (mocked outcomes)
@@ -93,7 +93,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/2 | Not started | - |
+| 1. Foundation | 2/2 | Complete | 2025-02-06 |
 | 2. Game Core | 0/? | Not started | - |
 | 3. Visual Polish | 0/? | Not started | - |
 | 4. Live Features | 0/? | Not started | - |

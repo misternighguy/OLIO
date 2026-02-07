@@ -99,8 +99,8 @@ Deferred to future release (Solana integration).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | Phase 1 | Pending |
-| LAYOUT-02 | Phase 1 | Pending |
+| LAYOUT-01 | Phase 1 | Complete |
+| LAYOUT-02 | Phase 1 | Complete |
 | LAYOUT-03 | Phase 2 | Pending |
 | LAYOUT-04 | Phase 6 | Pending |
 | GRID-01 | Phase 2 | Pending |
@@ -132,7 +132,7 @@ Deferred to future release (Solana integration).
 | DOCS-02 | Phase 5 | Pending |
 | DOCS-03 | Phase 5 | Pending |
 | DOCS-04 | Phase 5 | Pending |
-| VIS-01 | Phase 1 | Pending |
+| VIS-01 | Phase 1 | Complete |
 | VIS-02 | Phase 3 | Pending |
 | VIS-03 | Phase 3 | Pending |
 | VIS-04 | Phase 3 | Pending |
