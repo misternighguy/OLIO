@@ -24,7 +24,11 @@ Build a polished UI/UX for the OIL Drilling game, starting with project foundati
   2. Header displays logo, nav links, social buttons, and wallet connect stub
   3. Dark premium theme is applied globally
   4. Page transitions are smooth
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01: Project scaffolding — Next.js + Tailwind + dark theme
+- [ ] 01-02: Header component — Logo, nav, social, wallet stub, transitions
 
 ### Phase 2: Game Core
 **Goal**: Functional drilling grid with all controls (mocked outcomes)
@@ -89,7 +93,7 @@ Build a polished UI/UX for the OIL Drilling game, starting with project foundati
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/2 | Not started | - |
 | 2. Game Core | 0/? | Not started | - |
 | 3. Visual Polish | 0/? | Not started | - |
 | 4. Live Features | 0/? | Not started | - |
