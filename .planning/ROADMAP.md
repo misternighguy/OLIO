@@ -41,7 +41,11 @@ Plans:
   4. User can click tiles to flip them (basic flip, mocked outcome)
   5. User can click "Mine All Tiles" to flip all remaining
   6. Each tile shows its cost before flip
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01: Layout + controls panel — 3-column layout, all drill settings, balance, Mine All
+- [ ] 02-02: Grid + tiles — DrillingGrid, DrillTile, mock outcomes, Mine All wiring
 
 ### Phase 3: Visual Polish
 **Goal**: Polished animations and distinct outcome visuals
@@ -94,7 +98,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2025-02-06 |
-| 2. Game Core | 0/? | Not started | - |
+| 2. Game Core | 0/2 | Not started | - |
 | 3. Visual Polish | 0/? | Not started | - |
 | 4. Live Features | 0/? | Not started | - |
 | 5. Secondary Pages | 0/? | Not started | - |
