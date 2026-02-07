@@ -67,3 +67,17 @@ body {
 .animate-shake {
   animation: shake 0.4s ease-in-out;
 }
+
+@keyframes tile-flip-in {
+  0% {
+    transform: rotateY(-90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+.animate-tile-flip-in {
+  animation: tile-flip-in 0.4s ease-out forwards;
+  transform-style: preserve-3d;
+}

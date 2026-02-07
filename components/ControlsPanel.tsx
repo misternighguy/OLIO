@@ -1,10 +1,83 @@
 "use client";
 
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useGameState } from "@/lib/game-state";
 import type { Currency, ChanceMode, GridSize } from "@/lib/game-state";
 
 const CURRENCIES: Currency[] = ["SOL", "USDC", "USD1"];
 const GRID_SIZES: GridSize[] = [3, 4, 5];
+
+/* ── Collapsible section ── */
+function Section({
+  label,
+  value,
+  defaultOpen = false,
+  children,
+}: {
+  label: string;
+  value: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(
+    defaultOpen ? undefined : 0
+  );
+
+  useEffect(() => {
+    if (!bodyRef.current) return;
+    if (open) {
+      setHeight(bodyRef.current.scrollHeight);
+      const t = setTimeout(() => setHeight(undefined), 300);
+      return () => clearTimeout(t);
+    } else {
+      setHeight(bodyRef.current.scrollHeight);
+      requestAnimationFrame(() => setHeight(0));
+    }
+  }, [open]);
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] transition-colors duration-200 hover:border-white/10">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left transition-all duration-200 active:scale-[0.99]"
+      >
+        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+          {label}
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="text-sm font-medium text-[var(--text-primary)]">
+            {value}
+          </span>
+          <svg
+            className={`h-3.5 w-3.5 text-[var(--text-muted)] transition-transform duration-300 ${
+              open ? "rotate-180" : ""
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </span>
+      </button>
+      <div
+        ref={bodyRef}
+        className="overflow-hidden transition-[height] duration-300 ease-out"
+        style={{ height: height !== undefined ? `${height}px` : "auto" }}
+      >
+        <div className="px-4 pb-4 pt-1">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export function ControlsPanel() {
   const {
@@ -25,12 +98,11 @@ export function ControlsPanel() {
   } = useGameState();
 
   const step = currency === "SOL" ? 1 : 0.01;
-  const formatCost = (n: number) =>
-    n >= 1 ? n.toFixed(1) : n.toFixed(2);
+  const formatCost = (n: number) => (n >= 1 ? n.toFixed(1) : n.toFixed(2));
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Balance */}
+    <div className="flex flex-col gap-3">
+      {/* Balance — always visible */}
       <div className="min-w-0">
         <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
           Balance
@@ -59,10 +131,7 @@ export function ControlsPanel() {
       </div>
 
       {/* Currency */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Currency
-        </label>
+      <Section label="Currency" value={currency} defaultOpen>
         <div className="flex gap-2">
           {CURRENCIES.map((c) => (
             <button
@@ -79,20 +148,20 @@ export function ControlsPanel() {
             </button>
           ))}
         </div>
-      </div>
+      </Section>
 
       {/* Average Drill Cost */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Average Drill Cost ({currency})
-        </label>
+      <Section
+        label="Drill Cost"
+        value={`${formatCost(averageDrillCost)} ${currency}`}
+      >
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() =>
               setAverageDrillCost(Math.max(0.01, averageDrillCost - step))
             }
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-[var(--text-primary)] transition-all duration-300 hover:bg-white/10 hover:opacity-90 active:scale-95"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[var(--text-primary)] transition-all duration-300 hover:bg-white/10 hover:opacity-90 active:scale-95"
           >
             −
           </button>
@@ -113,7 +182,7 @@ export function ControlsPanel() {
             onClick={() =>
               setAverageDrillCost(Math.min(1000, averageDrillCost + step))
             }
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-[var(--text-primary)] transition-all duration-300 hover:bg-white/10 hover:opacity-90 active:scale-95"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[var(--text-primary)] transition-all duration-300 hover:bg-white/10 hover:opacity-90 active:scale-95"
           >
             +
           </button>
@@ -129,13 +198,13 @@ export function ControlsPanel() {
           }
           className="mt-2 w-full accent-[var(--accent)] transition-opacity duration-200 hover:opacity-90"
         />
-      </div>
+      </Section>
 
       {/* Volatility */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Volatility / Risk
-        </label>
+      <Section
+        label="Volatility / Risk"
+        value={`${Math.round(volatility * 100)}%`}
+      >
         <input
           type="range"
           min={0}
@@ -148,44 +217,33 @@ export function ControlsPanel() {
         <span className="mt-1 block text-right text-xs text-[var(--text-muted)]">
           {Math.round(volatility * 100)}%
         </span>
-      </div>
+      </Section>
 
       {/* Chance Mode */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Chance Mode
-        </label>
+      <Section
+        label="Chance Mode"
+        value={chanceMode === "equivalent" ? "Equivalent" : "Varied"}
+      >
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setChanceMode("equivalent")}
-            className={`flex-1 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:opacity-90 active:scale-[0.98] ${
-              chanceMode === "equivalent"
-                ? "bg-[var(--accent)] text-black"
-                : "bg-white/5 text-[var(--text-muted)] hover:bg-white/10"
-            }`}
-          >
-            Equivalent
-          </button>
-          <button
-            type="button"
-            onClick={() => setChanceMode("varied")}
-            className={`flex-1 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:opacity-90 active:scale-[0.98] ${
-              chanceMode === "varied"
-                ? "bg-[var(--accent)] text-black"
-                : "bg-white/5 text-[var(--text-muted)] hover:bg-white/10"
-            }`}
-          >
-            Varied
-          </button>
+          {(["equivalent", "varied"] as ChanceMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setChanceMode(mode)}
+              className={`flex-1 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:opacity-90 active:scale-[0.98] ${
+                chanceMode === mode
+                  ? "bg-[var(--accent)] text-black"
+                  : "bg-white/5 text-[var(--text-muted)] hover:bg-white/10"
+              }`}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </button>
+          ))}
         </div>
-      </div>
+      </Section>
 
       {/* Grid Size */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Grid Size
-        </label>
+      <Section label="Grid Size" value={`${gridSize}×${gridSize}`}>
         <div className="flex gap-2">
           {GRID_SIZES.map((s) => (
             <button
@@ -202,13 +260,13 @@ export function ControlsPanel() {
             </button>
           ))}
         </div>
-      </div>
+      </Section>
 
       {/* Mine All */}
       <button
         type="button"
         onClick={() => onMineAll?.()}
-        className="mt-auto rounded-lg bg-[var(--accent)] px-4 py-3 text-base font-semibold text-black transition-all duration-300 hover:bg-[var(--accent-muted)] hover:opacity-90 active:scale-[0.98]"
+        className="mt-2 rounded-lg bg-[var(--accent)] px-4 py-3 text-base font-semibold text-black transition-all duration-300 hover:bg-[var(--accent-muted)] hover:opacity-90 active:scale-[0.98]"
       >
         Mine All Tiles
       </button>

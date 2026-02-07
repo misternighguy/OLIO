@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useGameState } from "@/lib/game-state";
 import {
   generateTileCosts,
@@ -29,11 +29,21 @@ export function DrillingGrid() {
   const [insufficientBalanceTile, setInsufficientBalanceTile] = useState<
     number | null
   >(null);
+  // Track costs reserved by tiles still animating (prevents double-spending)
+  const pendingCostRef = useRef(0);
+  // Store pending pnl per tile index so we can apply on reveal
+  const pendingPnlRef = useRef<Map<number, number>>(new Map());
+  // Track staggered timeouts from Mine All so we can cancel on reset
+  const mineAllTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const n = gridSize * gridSize;
 
   const regenerateCosts = useCallback(() => {
     setInsufficientBalanceTile(null);
+    pendingCostRef.current = 0;
+    pendingPnlRef.current.clear();
+    mineAllTimersRef.current.forEach(clearTimeout);
+    mineAllTimersRef.current = [];
     setTileCosts(generateTileCosts(gridSize, averageDrillCost, volatility));
     setOutcomes(Array(n).fill(null));
   }, [gridSize, averageDrillCost, volatility, n]);
@@ -46,7 +56,8 @@ export function DrillingGrid() {
     (index: number) => {
       if (outcomes[index] != null) return;
       const cost = tileCosts[index];
-      if (balance < cost) {
+      const availableBalance = balance - pendingCostRef.current;
+      if (availableBalance < cost) {
         setInsufficientBalanceTile(index);
         setTimeout(() => setInsufficientBalanceTile(null), 500);
         return;
@@ -56,40 +67,76 @@ export function DrillingGrid() {
       const payout = getPayout(cost, outcome);
       const pnl = payout - cost;
 
+      // Reserve cost so rapid clicks can't overdraft
+      pendingCostRef.current += cost;
+      pendingPnlRef.current.set(index, pnl);
+
       setOutcomes((prev) => {
         const next = [...prev];
         next[index] = outcome;
         return next;
       });
-      updateSession(pnl, 1);
       if (outcome === "motherlode") triggerMotherlode(payout);
     },
-    [outcomes, tileCosts, balance, updateSession, triggerMotherlode]
+    [outcomes, tileCosts, balance, triggerMotherlode]
+  );
+
+  const handleTileReveal = useCallback(
+    (index: number) => {
+      const pnl = pendingPnlRef.current.get(index);
+      if (pnl == null) return;
+      const cost = tileCosts[index];
+      pendingCostRef.current = Math.max(0, pendingCostRef.current - cost);
+      pendingPnlRef.current.delete(index);
+      updateSession(pnl, 1);
+    },
+    [tileCosts, updateSession]
   );
 
   const mineAll = useCallback(() => {
+    // Clear any in-flight stagger timers from a previous Mine All
+    mineAllTimersRef.current.forEach(clearTimeout);
+    mineAllTimersRef.current = [];
+
+    // Gather unflipped tile indices
     const unflipped: number[] = [];
     for (let i = 0; i < n; i++) {
       if (outcomes[i] == null) unflipped.push(i);
     }
 
-    let totalPnl = 0;
-    const newOutcomes = [...outcomes];
-
+    // Figure out how many tiles we can afford (reserve costs up front to prevent overdraft)
+    let runningCost = pendingCostRef.current;
+    const affordableIndices: number[] = [];
     for (const i of unflipped) {
       const cost = tileCosts[i];
-      if (balance + totalPnl < cost) break;
-
-      const outcome = getOutcome();
-      const payout = getPayout(cost, outcome);
-      totalPnl += payout - cost;
-      newOutcomes[i] = outcome;
-      if (outcome === "motherlode") triggerMotherlode(payout);
+      if (balance - runningCost < cost) break;
+      runningCost += cost;
+      affordableIndices.push(i);
     }
+    // Reserve all costs now so single-clicks during cascade can't overdraft
+    pendingCostRef.current = runningCost;
 
-    setOutcomes(newOutcomes);
-    updateSession(totalPnl, unflipped.length);
-  }, [n, outcomes, tileCosts, balance, updateSession, triggerMotherlode]);
+    // Stagger each tile — outcome determined live when its timer fires
+    const STAGGER_MS = 100;
+    affordableIndices.forEach((tileIndex, order) => {
+      const timer = setTimeout(() => {
+        const cost = tileCosts[tileIndex];
+        const outcome = getOutcome();
+        const payout = getPayout(cost, outcome);
+        const pnl = payout - cost;
+
+        pendingPnlRef.current.set(tileIndex, pnl);
+
+        setOutcomes((prev) => {
+          const next = [...prev];
+          next[tileIndex] = outcome;
+          return next;
+        });
+        if (outcome === "motherlode") triggerMotherlode(payout);
+      }, order * STAGGER_MS);
+      mineAllTimersRef.current.push(timer);
+    });
+  }, [n, outcomes, tileCosts, balance, triggerMotherlode]);
 
   const handleResetAll = useCallback(() => {
     regenerateCosts();
@@ -118,7 +165,7 @@ export function DrillingGrid() {
           {Array.from({ length: n }).map((_, i) => (
             <div
               key={i}
-              className="aspect-square animate-pulse rounded-xl border border-white/10 bg-white/5"
+              className="aspect-square animate-pulse rounded-full border border-white/10 bg-white/5"
             />
           ))}
         </div>
@@ -143,9 +190,10 @@ export function DrillingGrid() {
             cost={cost}
             currency={currency}
             outcome={outcomes[i]}
-            affordable={balance >= cost}
+            affordable={balance - pendingCostRef.current >= cost}
             insufficientBalanceShake={insufficientBalanceTile === i}
             onDrill={() => drillTile(i)}
+            onReveal={() => handleTileReveal(i)}
             disabled={outcomes[i] != null}
           />
         ))}
