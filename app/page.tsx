@@ -1,10 +1,27 @@
+"use client";
+
+import {
+  GameLayout,
+  LeftPanel,
+  CenterPanel,
+  RightPanel,
+} from "@/components/GameLayout";
+import { ControlsPanel } from "@/components/ControlsPanel";
+import { DrillingGrid } from "@/components/DrillingGrid";
+import { SessionStats } from "@/components/SessionStats";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-[var(--text-primary)]">
-        OLIO
-      </h1>
-      <p className="mt-2 text-[var(--text-muted)]">OIL Drilling — Coming soon</p>
-    </main>
+    <GameLayout>
+      <LeftPanel>
+        <ControlsPanel />
+      </LeftPanel>
+      <CenterPanel>
+        <DrillingGrid />
+      </CenterPanel>
+      <RightPanel>
+        <SessionStats />
+      </RightPanel>
+    </GameLayout>
   );
 }
