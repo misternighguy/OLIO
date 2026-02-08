@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
+import { WalletButton } from "@/components/WalletButton";
+import { useSolBalance } from "@/lib/use-sol-balance";
 
 function TwitterIcon({ className }: { className?: string }) {
   return (
@@ -71,6 +73,7 @@ function useHeaderAudio() {
 
 export function Header() {
   const { enabled: audioEnabled, toggle: toggleAudio } = useHeaderAudio();
+  const { balance } = useSolBalance();
 
   return (
     <header className="sticky top-0 z-10 border-b border-white/10 bg-white/10 backdrop-blur-[1px]">
@@ -148,14 +151,12 @@ export function Header() {
               </a>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => {}}
-            className="rounded-lg bg-black px-3 py-2 text-xs font-medium text-white transition-all hover:bg-zinc-800 active:scale-[0.98] sm:px-4 sm:text-sm"
-          >
-            <span className="hidden sm:inline">Connect Wallet</span>
-            <span className="sm:hidden">Connect</span>
-          </button>
+          {balance !== null && (
+            <span className="hidden font-mono text-xs text-[var(--accent)] sm:inline">
+              {balance.toFixed(4)} SOL
+            </span>
+          )}
+          <WalletButton />
         </div>
       </div>
     </header>
