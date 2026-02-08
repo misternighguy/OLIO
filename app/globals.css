@@ -49,18 +49,87 @@ body {
 }
 
 @keyframes motherlode-in {
-  from {
+  0% {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.7);
+    filter: blur(8px);
   }
-  to {
+  60% {
+    opacity: 1;
+    transform: scale(1.05);
+    filter: blur(0);
+  }
+  100% {
     opacity: 1;
     transform: scale(1);
+    filter: blur(0);
   }
 }
 
 .animate-motherlode-in {
-  animation: motherlode-in 0.4s ease-out forwards;
+  animation: motherlode-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes motherlode-glow {
+  0%, 100% {
+    box-shadow: 0 0 40px rgba(212, 168, 83, 0.3), 0 0 80px rgba(212, 168, 83, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 60px rgba(212, 168, 83, 0.5), 0 0 120px rgba(212, 168, 83, 0.25);
+  }
+}
+
+.animate-motherlode-glow {
+  animation: motherlode-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes motherlode-title {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-motherlode-title {
+  animation: motherlode-title 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes motherlode-amount {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-motherlode-amount {
+  animation: motherlode-amount 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
+  opacity: 0;
+}
+
+@keyframes motherlode-backdrop {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+.animate-motherlode-backdrop {
+  animation: motherlode-backdrop 0.4s ease-out forwards;
 }
 
 @keyframes shake {

@@ -79,7 +79,7 @@ const getDefaultState = (): GameState => ({
   currency: "SOL",
   averageDrillCost: 0.25,
   riskLevel: "targeted",
-  gridSize: 5,
+  gridSize: 4,
   balance: 10,
   sessionPnl: 0,
   tilesFlipped: 0,

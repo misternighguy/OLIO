@@ -223,33 +223,36 @@ export function DrillingGrid() {
     return () => setOnResetAll(null);
   }, [handleResetAll, setOnResetAll]);
 
-  const unminedTotal = tileCosts.reduce((a, b) => a + b, 0);
+  const unminedTotal = tileCosts.reduce(
+    (sum, cost, i) => sum + (outcomes[i] == null ? cost : 0),
+    0
+  );
   const minedTotal = tileCosts.reduce(
     (sum, cost, i) => sum + (outcomes[i] != null ? cost : 0),
     0
   );
 
   const StatsBar = () => (
-    <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-      <div className="flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
+    <div className="mt-3 grid w-full grid-cols-2 gap-2">
+      <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
         <span className="text-xs font-medium text-black">Unmined</span>
         <span className="font-mono text-xs font-semibold text-black/80">
           {unminedTotal.toFixed(2)} {currency}
         </span>
       </div>
-      <div className="flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
+      <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
         <span className="text-xs font-medium text-black">Mined</span>
         <span className="font-mono text-xs font-semibold text-black/80">
           {minedTotal.toFixed(2)} {currency}
         </span>
       </div>
-      <div className="flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
+      <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
         <span className="text-xs font-medium text-black">Attempts</span>
         <span className="font-mono text-xs font-semibold text-black/80">
           {tilesFlipped}
         </span>
       </div>
-      <div className="flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
+      <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5">
         <span className="text-xs font-medium text-black">Profit</span>
         <span
           className={`font-mono text-xs font-semibold ${

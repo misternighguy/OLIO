@@ -82,7 +82,7 @@ export function RightPanelContent() {
           <div className="flex flex-col gap-2">
             <div className="relative flex w-full min-w-0 flex-col justify-center rounded-lg border border-[var(--accent)]/30 bg-black px-3 py-2 sm:px-4 sm:py-3">
               <p className="truncate text-[7px] font-medium uppercase tracking-wider text-white/90 sm:text-[9px]">
-                Locked OIL Reserve
+                Locked $OIL Reserve
               </p>
               {oilReserveLoading ? (
                 <p className="mt-0.5 font-mono text-xs text-[var(--text-muted)] sm:text-sm">Loading…</p>

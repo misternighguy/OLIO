@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useGameState } from "@/lib/game-state";
 import type { Currency, GridSize, RiskLevel } from "@/lib/game-state";
+import { useSolPrice } from "@/lib/use-sol-price";
 
 const CURRENCIES: Currency[] = ["SOL", "USDC", "USD1"];
 const GRID_SIZES: GridSize[] = [3, 4, 5];
@@ -15,7 +16,19 @@ const RISK_LEVELS: { value: RiskLevel; label: string }[] = [
 const HOVER_DELAY_MS = 220;
 const EXPAND_DURATION_MS = 350;
 
-/* ── Collapsible section (hover to expand) ── */
+function useSupportsHover() {
+  const [supportsHover, setSupportsHover] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover)");
+    setSupportsHover(mq.matches);
+    const handler = () => setSupportsHover(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return supportsHover;
+}
+
+/* ── Collapsible section (hover on desktop, click on mobile) ── */
 function Section({
   label,
   value,
@@ -35,6 +48,7 @@ function Section({
     defaultOpen ? undefined : 0
   );
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const supportsHover = useSupportsHover();
 
   useEffect(() => {
     if (!bodyRef.current) return;
@@ -49,15 +63,22 @@ function Section({
   }, [open]);
 
   const handleMouseEnter = () => {
+    if (!supportsHover) return;
     hoverTimerRef.current = setTimeout(() => setOpen(true), HOVER_DELAY_MS);
   };
 
   const handleMouseLeave = () => {
+    if (!supportsHover) return;
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current);
       hoverTimerRef.current = null;
     }
     setOpen(false);
+  };
+
+  const handleClick = () => {
+    if (supportsHover) return;
+    setOpen((prev) => !prev);
   };
 
   useEffect(() => {
@@ -74,8 +95,17 @@ function Section({
       onMouseLeave={handleMouseLeave}
     >
       <div
-        className="flex w-full cursor-default items-center justify-between px-4 py-3 text-left transition-all duration-200"
+        className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left transition-all duration-200"
         aria-expanded={open}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (!supportsHover && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            setOpen((prev) => !prev);
+          }
+        }}
+        role="button"
+        tabIndex={supportsHover ? undefined : 0}
       >
         <span className="text-xs font-medium uppercase tracking-wider text-white">
           {label}
@@ -129,10 +159,17 @@ export function ControlsPanel() {
     setBalance,
     onMineAll,
     onResetAll,
+    triggerMotherlode,
   } = useGameState();
+
+  const { price: solPrice } = useSolPrice();
 
   const step = currency === "SOL" ? 1 : 0.01;
   const formatCost = (n: number) => (n >= 1 ? n.toFixed(1) : n.toFixed(2));
+  const formatUsd = (n: number) =>
+    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const usdValue =
+    currency === "SOL" && solPrice != null ? balance * solPrice : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -152,8 +189,16 @@ export function ControlsPanel() {
       >
         Reset All
       </button>
-      {/* Balance — third on mobile, first on desktop */}
-      <div className="order-3 min-w-0 lg:order-1">
+      {/* Motherlode Test — dev button to preview overlay */}
+      <button
+        type="button"
+        onClick={() => triggerMotherlode(12.5)}
+        className="order-2 rounded-lg border border-[var(--accent)]/50 bg-[var(--accent)]/10 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--accent)] transition-all duration-300 hover:bg-[var(--accent)]/20 hover:opacity-90 active:scale-[0.98] lg:order-8"
+      >
+        Motherlode Test
+      </button>
+      {/* Balance — shown in left panel on desktop only; on mobile, shown above grid via MobileBalanceStrip */}
+      <div className="order-3 hidden min-w-0 lg:order-1 lg:block">
         <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-white">
           Balance
         </label>
@@ -163,21 +208,26 @@ export function ControlsPanel() {
         >
           <span className="shrink-0 whitespace-nowrap font-mono text-lg text-[var(--text-primary)]">
             {formatCost(balance)} {currency}
+            {usdValue != null && (
+              <span className="ml-2 text-sm text-[var(--text-muted)]">
+                (${formatUsd(usdValue)})
+              </span>
+            )}
           </span>
           <div className="flex min-w-0 gap-2">
             <button
               type="button"
               onClick={() => setBalance(balance + 5)}
-              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--accent)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-95"
+              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--accent)] transition-all duration-300 hover:bg-white hover:text-black hover:opacity-90 active:scale-95"
             >
-              +Deposit
+              Deposit
             </button>
             <button
               type="button"
               onClick={() => setBalance(Math.max(0, balance - 1))}
-              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-95"
+              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition-all duration-300 hover:bg-white hover:text-black hover:opacity-90 active:scale-95"
             >
-              −Withdraw
+              Withdraw
             </button>
           </div>
         </div>
