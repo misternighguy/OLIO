@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useGameState } from "@/lib/game-state";
+import { useSolBalance } from "@/lib/use-sol-balance";
 import type { Currency, GridSize, RiskLevel } from "@/lib/game-state";
 
 const CURRENCIES: Currency[] = ["SOL", "USDC", "USD1"];
@@ -131,6 +132,12 @@ export function ControlsPanel() {
     onResetAll,
   } = useGameState();
 
+  const { balance: walletSol, loading: walletLoading } = useSolBalance();
+
+  // When wallet is connected and currency is SOL, show on-chain balance
+  const displayBalance =
+    currency === "SOL" && walletSol !== null ? walletSol : balance;
+
   const step = currency === "SOL" ? 1 : 0.01;
   const formatCost = (n: number) => (n >= 1 ? n.toFixed(1) : n.toFixed(2));
 
@@ -146,7 +153,7 @@ export function ControlsPanel() {
           style={{ backgroundImage: "url(/buttonbg1.png)" }}
         >
           <span className="shrink-0 whitespace-nowrap font-mono text-lg text-[var(--text-primary)]">
-            {formatCost(balance)} {currency}
+            {walletLoading && currency === "SOL" ? "..." : formatCost(displayBalance)} {currency}
           </span>
           <div className="flex min-w-0 gap-2">
             <button

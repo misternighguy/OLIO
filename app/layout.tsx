@@ -41,12 +41,14 @@ export default function RootLayout({
           aria-hidden
           className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(212,168,83,0.08),transparent)]"
         />
-        <div className="relative z-10 flex min-h-screen flex-1 flex-col min-h-0">
-          <Header />
-          <main className="flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ease-out">
-            {children}
-          </main>
-        </div>
+        <WalletProvider>
+          <div className="relative z-10 flex min-h-screen flex-1 flex-col min-h-0">
+            <Header />
+            <main className="flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ease-out">
+              {children}
+            </main>
+          </div>
+        </WalletProvider>
       </body>
     </html>
   );
