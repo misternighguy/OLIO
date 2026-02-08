@@ -1,17 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import { publicKey as toUmiPublicKey } from "@metaplex-foundation/umi";
-import type { Umi } from "@metaplex-foundation/umi";
+import { useState, useEffect } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-const LAMPORTS_PER_SOL = 1_000_000_000;
 const REFETCH_INTERVAL_MS = 15_000;
-const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
 export interface SolBalanceData {
-  /** SOL balance (human-readable, e.g. 1.5) or null when unknown */
   balance: number | null;
   loading: boolean;
   error: string | null;
@@ -20,39 +15,33 @@ export interface SolBalanceData {
 export function useSolBalance(
   refetchIntervalMs = REFETCH_INTERVAL_MS,
 ): SolBalanceData {
-  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const { publicKey, connected } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const umiRef = useRef<Umi | null>(null);
-
-  // Lazily create the Umi instance once
-  if (!umiRef.current) {
-    umiRef.current = createUmi(MAINNET_RPC);
-  }
 
   useEffect(() => {
-    if (!publicKey || !umiRef.current) {
+    if (!publicKey || !connected) {
       setBalance(null);
       setError(null);
       setLoading(false);
       return;
     }
 
-    const umi = umiRef.current;
-    const key = toUmiPublicKey(publicKey.toBase58());
     let cancelled = false;
 
     async function fetchBalance() {
-      if (!umi) return;
+      if (!publicKey) return;
       try {
         setLoading(true);
-        const solAmount = await umi.rpc.getBalance(key);
+        const lamports = await connection.getBalance(publicKey);
         if (!cancelled) {
-          setBalance(Number(solAmount.basisPoints) / LAMPORTS_PER_SOL);
+          setBalance(lamports / LAMPORTS_PER_SOL);
           setError(null);
         }
       } catch (err) {
+        console.error("Failed to fetch SOL balance:", err);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to fetch balance");
         }
@@ -68,7 +57,7 @@ export function useSolBalance(
       cancelled = true;
       clearInterval(id);
     };
-  }, [publicKey, refetchIntervalMs]);
+  }, [publicKey, connected, connection, refetchIntervalMs]);
 
   return { balance, loading, error };
 }
