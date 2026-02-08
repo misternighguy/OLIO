@@ -6,6 +6,20 @@ import { io } from "socket.io-client";
 const SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
+/** Skip connecting when deployed (e.g. Vercel) and no chat server URL is set.
+ * Connecting to localhost from a production domain triggers browser local-network permission. */
+function shouldConnectSocket(): boolean {
+  if (typeof window === "undefined") return false;
+  const url = SOCKET_URL;
+  const isLocalhost =
+    url.includes("localhost") || url.includes("127.0.0.1");
+  const isProduction =
+    !window.location.hostname.includes("localhost") &&
+    !window.location.hostname.includes("127.0.0.1");
+  if (isProduction && isLocalhost) return false;
+  return true;
+}
+
 interface ChatMessage {
   id: string;
   sender: string;
@@ -28,6 +42,11 @@ export function ChatPanel() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!shouldConnectSocket()) {
+      setStatus("error");
+      return;
+    }
+
     const socket = io(SOCKET_URL, { autoConnect: true });
     socketRef.current = socket;
 

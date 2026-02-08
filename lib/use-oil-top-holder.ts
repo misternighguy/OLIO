@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 interface OilTopHolderData {
   solValue: number | null;
   usdValue: number | null;
+  topHolderBalance: number | null; // OIL token amount
   loading: boolean;
   error: string | null;
 }
@@ -19,6 +20,7 @@ export function useOilTopHolder(
   const [data, setData] = useState<OilTopHolderData>({
     solValue: null,
     usdValue: null,
+    topHolderBalance: null,
     loading: true,
     error: null,
   });
@@ -40,6 +42,7 @@ export function useOilTopHolder(
           setData({
             solValue: json.solValue ?? null,
             usdValue: json.usdValue ?? null,
+            topHolderBalance: json.topHolderBalance ?? null,
             loading: false,
             error: null,
           });
@@ -50,6 +53,7 @@ export function useOilTopHolder(
           setData({
             solValue: null,
             usdValue: null,
+            topHolderBalance: null,
             loading: false,
             error: err instanceof Error ? err.message : "Unknown error",
           });

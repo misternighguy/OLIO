@@ -72,11 +72,26 @@ export interface LeaderboardEntry {
 }
 
 export const topMiners: LeaderboardEntry[] = [
-  { rank: 1, address: "7xK9...m2P", value: 12450 },
-  { rank: 2, address: "2aBc...qR4", value: 9870 },
-  { rank: 3, address: "9fH3...n8L", value: 8430 },
-  { rank: 4, address: "4dE1...wX7", value: 7120 },
-  { rank: 5, address: "1pQ2...zY9", value: 5890 },
+  { rank: 1, address: "AeRD...Dfpe", value: 24227.18 },
+  { rank: 2, address: "8Q4M...KJdZ", value: 15689.5633 },
+  { rank: 3, address: "Tirith", value: 15522.1 },
+  { rank: 4, address: "7xK9...m2P", value: 12450 },
+  { rank: 5, address: "2aBc...qR4", value: 9870 },
+  { rank: 6, address: "9fH3...n8L", value: 8430 },
+  { rank: 7, address: "4dE1...wX7", value: 7120 },
+  { rank: 8, address: "1pQ2...zY9", value: 5890 },
+  { rank: 9, address: "0uI1...aE8", value: 5120 },
+  { rank: 10, address: "5rT6...vC3", value: 4580 },
+  { rank: 11, address: "8kL9...bN0", value: 3920 },
+  { rank: 12, address: "3jM4...hG2", value: 3410 },
+  { rank: 13, address: "6sW7...fD5", value: 2890 },
+  { rank: 14, address: "tS2K...izGj", value: 2450 },
+  { rank: 15, address: "2vO3...cR6", value: 1980 },
+  { rank: 16, address: "vO9...xR2", value: 1650 },
+  { rank: 17, address: "K3m...pL7", value: 1420 },
+  { rank: 18, address: "qN1...wZ4", value: 1180 },
+  { rank: 19, address: "bT5...yM9", value: 980 },
+  { rank: 20, address: "fH8...nQ2", value: 820 },
 ];
 
 export const topWinners: LeaderboardEntry[] = [
@@ -97,14 +112,43 @@ export const mostMotherlodes: LeaderboardEntry[] = [
 
 export function formatRelativeTime(ts: number): string {
   const diff = Date.now() - ts;
+  const secs = Math.floor(diff / 1000);
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "just now";
+  if (secs < 60) return secs <= 1 ? "just now" : `${secs} sec ago`;
   if (mins < 60) return `${mins}m ago`;
   if (hours < 24) return `${hours}h ago`;
   return `${days}d ago`;
 }
+
+/** Motherlode round — when a player hit the jackpot */
+export interface MotherlodeRound {
+  roundId: number;
+  segment: number; // segments are every 6 hours
+  winner: string;
+  winnersCount: number;
+  deployed: number; // SOL wagered
+  vaulted: number; // game profit (SOL)
+  winnings: number; // motherlode payout (SOL)
+  timestamp: number;
+  solscanTx: string;
+}
+
+const MOCK_TX = "4vVdMNx9K2pL7qR3sT8uW1xY5zA6bC0dE2fG4hI"; // placeholder for Solscan link
+
+export const motherlodeRounds: MotherlodeRound[] = [
+  { roundId: 148904, segment: 15, winner: "tS2K...izGj", winnersCount: 1, deployed: 206.7, vaulted: 0.0641, winnings: 0.6712, timestamp: Date.now() - 46 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148891, segment: 15, winner: "7xK9...m2P", winnersCount: 1, deployed: 189.2, vaulted: 0.0589, winnings: 0.7124, timestamp: Date.now() - 4 * 60 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148856, segment: 14, winner: "2aBc...qR4", winnersCount: 1, deployed: 224.1, vaulted: 0.0692, winnings: 0.5833, timestamp: Date.now() - 43 * 60 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148820, segment: 14, winner: "9fH3...n8L", winnersCount: 1, deployed: 198.5, vaulted: 0.0612, winnings: 0.6491, timestamp: Date.now() - 2 * 3600 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148801, segment: 13, winner: "4dE1...wX7", winnersCount: 2, deployed: 312.4, vaulted: 0.0965, winnings: 1.2402, timestamp: Date.now() - 5 * 3600 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148763, segment: 13, winner: "0uI1...aE8", winnersCount: 1, deployed: 167.8, vaulted: 0.0518, winnings: 0.5521, timestamp: Date.now() - 8 * 3600 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148721, segment: 12, winner: "5rT6...vC3", winnersCount: 1, deployed: 245.3, vaulted: 0.0757, winnings: 0.8089, timestamp: Date.now() - 14 * 3600 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148689, segment: 12, winner: "7xK9...m2P", winnersCount: 1, deployed: 278.9, vaulted: 0.0861, winnings: 0.9234, timestamp: Date.now() - 20 * 3600 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148652, segment: 11, winner: "3jM4...hG2", winnersCount: 1, deployed: 193.2, vaulted: 0.0597, winnings: 0.6345, timestamp: Date.now() - 26 * 3600 * 1000, solscanTx: MOCK_TX },
+  { roundId: 148615, segment: 11, winner: "8kL9...bN0", winnersCount: 1, deployed: 221.7, vaulted: 0.0685, winnings: 0.7289, timestamp: Date.now() - 32 * 3600 * 1000, solscanTx: MOCK_TX },
+];
 
 /** Daily drilling activity for transparency table (fees.pump.fun style) */
 export interface DailyDrillingEntry {
@@ -170,3 +214,66 @@ export const dailyDrillingActivity: DailyDrillingEntry[] = [
   { date: formatDate(1, 2), tilesDrilled: 20600, amountSol: 9040, amountUsd: 709640, avgCostSol: 0.439, pctOfDailyRevenue: 99.3, revenueSol: 9105 },
   { date: formatDate(1, 1), tilesDrilled: 22100, amountSol: 9700, amountUsd: 761450, avgCostSol: 0.439, pctOfDailyRevenue: 99.4, revenueSol: 9755 },
 ];
+
+/** OIL purchase/buyback entry for chart (30% of revenue → OIL Reserve buybacks) */
+export interface DailyPurchaseEntry {
+  date: string;
+  dateKey: string; // for sorting/selection
+  timestamp: number;
+  revenueSol: number;
+  revenueUsd: number;
+  purchasesSol: number;
+  purchasesUsd: number;
+  purchasesPctOfPrevRevenue: number;
+  oilBought: number;
+  priceSolPerOil: number;
+}
+
+const SOL_USD = 78.5; // mock SOL price for USD calc
+
+/** Derive OIL purchase data from dailyDrillingActivity (30% revenue → buybacks) */
+export function getDailyPurchaseData(): DailyPurchaseEntry[] {
+  const entries: DailyPurchaseEntry[] = [];
+  for (let i = 0; i < dailyDrillingActivity.length; i++) {
+    const row = dailyDrillingActivity[i];
+    const prev = dailyDrillingActivity[i + 1];
+    const purchasesSol = row.revenueSol * 0.3; // 30% to OIL Reserve
+    const priceSolPerOil = 0.85 + (i % 11) * 0.025; // mock: ~0.85–1.1 SOL per OIL (deterministic)
+    const oilBought = purchasesSol / priceSolPerOil;
+    const purchasesPctOfPrevRevenue = prev
+      ? (purchasesSol / prev.revenueSol) * 100
+      : 100;
+
+    const parts = row.date.replace(",", "").split(" ");
+    const month = parts[0];
+    const day = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    const monthNum =
+      "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(month.slice(0, 3)) / 3 + 1;
+    const dt = new Date(year, monthNum - 1, day);
+
+    entries.push({
+      date: row.date,
+      dateKey: dt.toISOString().slice(0, 10),
+      timestamp: dt.getTime(),
+      revenueSol: row.revenueSol,
+      revenueUsd: row.revenueSol * SOL_USD,
+      purchasesSol,
+      purchasesUsd: purchasesSol * SOL_USD,
+      purchasesPctOfPrevRevenue,
+      oilBought,
+      priceSolPerOil,
+    });
+  }
+  return entries.reverse(); // oldest first for chart
+}
+
+export const dailyPurchaseData = getDailyPurchaseData();
+
+/** Totals for OIL purchases chart header */
+export const purchaseTotals = {
+  totalPurchasesUsd: dailyPurchaseData.reduce((s, r) => s + r.purchasesUsd, 0),
+  totalOilBought: dailyPurchaseData.reduce((s, r) => s + r.oilBought, 0),
+  totalSolSpent: dailyPurchaseData.reduce((s, r) => s + r.purchasesSol, 0),
+  totalUsdSpent: dailyPurchaseData.reduce((s, r) => s + r.purchasesUsd, 0),
+};
