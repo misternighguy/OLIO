@@ -74,7 +74,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-white/10 bg-white/10 backdrop-blur-[1px]">
-      <div className="relative mx-auto flex h-14 max-w-7xl min-w-0 items-center justify-between gap-2 px-3 sm:px-4 md:px-6">
+      <div className="relative flex h-14 min-w-0 items-center justify-between gap-2 px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
         {/* Left: Logo + Nav */}
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 md:gap-8">
           <Link

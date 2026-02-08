@@ -136,8 +136,24 @@ export function ControlsPanel() {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Balance — always visible */}
-      <div className="min-w-0">
+      {/* Mine All — first on mobile (<1024px) */}
+      <button
+        type="button"
+        onClick={() => onMineAll?.()}
+        className="order-1 mt-0 rounded-lg bg-white px-4 py-3 text-base font-semibold text-black transition-all duration-300 hover:bg-gray-200 active:scale-[0.98] lg:order-6 lg:mt-2"
+      >
+        Mine All Tiles
+      </button>
+      {/* Reset All — second on mobile */}
+      <button
+        type="button"
+        onClick={() => onResetAll?.()}
+        className="order-2 rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-[0.98] lg:order-7"
+      >
+        Reset All
+      </button>
+      {/* Balance — third on mobile, first on desktop */}
+      <div className="order-3 min-w-0 lg:order-1">
         <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-white">
           Balance
         </label>
@@ -168,7 +184,8 @@ export function ControlsPanel() {
       </div>
 
       {/* Currency */}
-      <Section label="Currency" value={currency} bgImage="/buttonbg2.png">
+      <div className="order-4 lg:order-2">
+        <Section label="Currency" value={currency} bgImage="/buttonbg2.png">
         <div className="flex gap-2">
           {CURRENCIES.map((c) => (
             <button
@@ -186,9 +203,11 @@ export function ControlsPanel() {
           ))}
         </div>
       </Section>
+      </div>
 
       {/* Average Drill Cost */}
-      <Section
+      <div className="order-5 lg:order-3">
+        <Section
         label="Drill Cost"
         value={`${formatCost(averageDrillCost)} ${currency}`}
         bgImage="/buttonbg3.png"
@@ -237,9 +256,11 @@ export function ControlsPanel() {
           className="mt-2 w-full accent-[var(--accent)] transition-opacity duration-200 hover:opacity-90"
         />
       </Section>
+      </div>
 
       {/* Risk Level */}
-      <Section
+      <div className="order-6 lg:order-4">
+        <Section
         label="Risk"
         value={RISK_LEVELS.find((r) => r.value === riskLevel)?.label || "Targeted (med)"}
         bgImage="/buttonbg4.png"
@@ -261,9 +282,11 @@ export function ControlsPanel() {
           ))}
         </div>
       </Section>
+      </div>
 
       {/* Grid Size */}
-      <Section label="Grid Size" value={`${gridSize}×${gridSize}`} bgImage="/buttonbg5.png">
+      <div className="order-7 lg:order-5">
+        <Section label="Grid Size" value={`${gridSize}×${gridSize}`} bgImage="/buttonbg5.png">
         <div className="flex gap-2">
           {GRID_SIZES.map((s) => (
             <button
@@ -281,23 +304,7 @@ export function ControlsPanel() {
           ))}
         </div>
       </Section>
-
-      {/* Mine All */}
-      <button
-        type="button"
-        onClick={() => onMineAll?.()}
-        className="mt-2 rounded-lg px-4 py-3 text-base font-semibold text-black bg-white transition-all duration-300 hover:bg-gray-200 active:scale-[0.98]"
-      >
-        Mine All Tiles
-      </button>
-      {/* Reset All */}
-      <button
-        type="button"
-        onClick={() => onResetAll?.()}
-        className="rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-[0.98]"
-      >
-        Reset All
-      </button>
+      </div>
     </div>
   );
 }
