@@ -14,7 +14,8 @@ export function DrillingGrid() {
     currency,
     balance,
     audioEnabled,
-    setAudioEnabled,
+    tilesFlipped,
+    sessionPnl,
     updateSession,
     setOnMineAll,
     setOnResetAll,
@@ -224,7 +225,29 @@ export function DrillingGrid() {
 
   if (tileCosts.length !== n) {
     return (
-      <div className="w-full min-w-0 max-w-2xl">
+      <div className="mx-auto w-[90%] min-w-0 max-w-2xl">
+        <div className="mb-3 flex justify-end">
+          <div className="flex items-center gap-4 rounded-lg bg-white/20 px-4 py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-black">Attempts</span>
+              <span className="font-mono text-sm font-semibold text-black/60">
+                {tilesFlipped}
+              </span>
+            </div>
+            <div className="h-4 w-px bg-black/30" aria-hidden />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-black">Profit</span>
+              <span
+                className={`font-mono text-sm font-semibold ${
+                  sessionPnl >= 0 ? "text-emerald-600" : "text-red-600"
+                }`}
+              >
+                {sessionPnl >= 0 ? "+" : ""}
+                {sessionPnl.toFixed(2)} {currency}
+              </span>
+            </div>
+          </div>
+        </div>
         <div
           className="grid gap-1.5 sm:gap-2 md:gap-3"
           style={{
@@ -248,6 +271,32 @@ export function DrillingGrid() {
 
   return (
     <div className="mx-auto w-[90%] min-w-0 max-w-2xl">
+      <div className="mb-3 flex justify-end">
+        <div className="flex items-center gap-4 rounded-lg bg-white/20 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-black">Attempts</span>
+            <span
+              className={`font-mono text-sm font-semibold ${
+                tilesFlipped > 1 ? "text-black" : "text-black/60"
+              }`}
+            >
+              {tilesFlipped}
+            </span>
+          </div>
+          <div className="h-4 w-px bg-black/30" aria-hidden />
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-black">Profit</span>
+            <span
+              className={`font-mono text-sm font-semibold ${
+                sessionPnl >= 0 ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {sessionPnl >= 0 ? "+" : ""}
+              {sessionPnl.toFixed(2)} {currency}
+            </span>
+          </div>
+        </div>
+      </div>
       <div
         className="grid gap-1.5 sm:gap-2 md:gap-3"
         style={{
