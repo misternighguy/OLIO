@@ -70,7 +70,7 @@ export function ChatPanel() {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+        <span className="text-xs font-medium uppercase tracking-wider text-white">
           Chat
         </span>
         <span
@@ -89,7 +89,7 @@ export function ChatPanel() {
       </div>
       <div
         ref={listRef}
-        className="flex max-h-[200px] min-h-[120px] flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3"
+        className="flex max-h-[200px] min-h-[120px] flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-zinc-800 p-3"
       >
         {messages.length === 0 && status === "connected" && (
           <p className="text-xs text-[var(--text-muted)]">
@@ -120,7 +120,7 @@ export function ChatPanel() {
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="Type a message…"
           disabled={status !== "connected"}
-          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors duration-200 focus:border-[var(--accent)] focus:outline-none disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors duration-200 focus:border-[var(--accent)] focus:outline-none disabled:opacity-50"
         />
         <button
           type="button"
