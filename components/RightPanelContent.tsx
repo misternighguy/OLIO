@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useGameState } from "@/lib/game-state";
 import { useSolPrice } from "@/lib/use-sol-price";
+import { useOilTopHolder } from "@/lib/use-oil-top-holder";
 import { useAnimatedNumber } from "@/lib/use-animated-number";
 import { HowItWorksPanel } from "@/components/HowItWorksPanel";
 import { ChatPanel } from "@/components/ChatPanel";
@@ -11,15 +12,9 @@ const formatLarge = (n: number) =>
   n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toFixed(2);
 
 export function RightPanelContent() {
-  const {
-    tilesFlipped,
-    sessionPnl,
-    currency,
-    motherlodePool,
-    oilReserve,
-    payoutReserve,
-  } = useGameState();
+  const { currency, motherlodePool } = useGameState();
   const { price: solPrice } = useSolPrice(20_000);
+  const { solValue: oilReserveSol, usdValue: oilReserveUsd, loading: oilReserveLoading, error: oilReserveError } = useOilTopHolder(120_000);
 
   const usdValue =
     currency === "SOL" && solPrice != null
@@ -28,6 +23,7 @@ export function RightPanelContent() {
         ? motherlodePool
         : null;
   const animatedUsd = useAnimatedNumber(usdValue, 1500);
+  const animatedOilReserveUsd = useAnimatedNumber(oilReserveUsd, 1500);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const formatUsd = (n: number) =>
@@ -84,42 +80,29 @@ export function RightPanelContent() {
             Reserves
           </div>
           <div className="flex flex-col gap-2">
-            <div className="rounded-lg bg-zinc-800 px-4 py-3">
-              <p className="text-xs text-white">OIL Reserve</p>
-              <p className="font-mono text-sm text-[var(--text-primary)]">
-                {formatLarge(oilReserve)} {currency}
+            <div className="relative flex w-full min-w-0 flex-col justify-center rounded-lg border border-[var(--accent)]/30 bg-black px-3 py-2 sm:px-4 sm:py-3">
+              <p className="truncate text-[7px] font-medium uppercase tracking-wider text-white/90 sm:text-[9px]">
+                Locked OIL Reserve
               </p>
+              {oilReserveLoading ? (
+                <p className="mt-0.5 font-mono text-xs text-[var(--text-muted)] sm:text-sm">Loading…</p>
+              ) : oilReserveError ? (
+                <p className="mt-0.5 font-mono text-[10px] text-red-400 sm:text-xs">{oilReserveError}</p>
+              ) : oilReserveSol != null ? (
+                <>
+                  {animatedOilReserveUsd != null && (
+                    <p className="mt-0.5 truncate font-mono text-sm font-semibold text-white sm:mt-1 sm:text-base">
+                      ${formatUsd(animatedOilReserveUsd)}
+                    </p>
+                  )}
+                  <p className="mt-0.5 truncate font-mono text-xs font-medium text-white/80 sm:text-sm">
+                    {formatLarge(oilReserveSol)} SOL
+                  </p>
+                </>
+              ) : (
+                <p className="mt-0.5 font-mono text-xs text-[var(--text-muted)]">—</p>
+              )}
             </div>
-            <div className="rounded-lg bg-zinc-800 px-4 py-3">
-              <p className="text-xs text-white">Payout Reserve</p>
-              <p className="font-mono text-sm text-[var(--text-primary)]">
-                {formatLarge(payoutReserve)} {currency}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Session */}
-        <div>
-          <div className="mb-1 text-xs font-medium uppercase tracking-wider text-white">
-            Session
-          </div>
-          <div className="rounded-lg bg-zinc-800 p-4">
-            <p className="text-sm text-[var(--text-muted)]">
-              Attempts:{" "}
-              <span className="text-[var(--text-primary)]">{tilesFlipped}</span>
-            </p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Profit:{" "}
-              <span
-                className={
-                  sessionPnl >= 0 ? "text-emerald-400" : "text-red-400"
-                }
-              >
-                {sessionPnl >= 0 ? "+" : ""}
-                {sessionPnl.toFixed(2)} {currency}
-              </span>
-            </p>
           </div>
         </div>
 

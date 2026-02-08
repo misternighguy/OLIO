@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type ReactNode } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useGameState } from "@/lib/game-state";
-import { useSolBalance } from "@/lib/use-sol-balance";
 import type { Currency, GridSize, RiskLevel } from "@/lib/game-state";
 
 const CURRENCIES: Currency[] = ["SOL", "USDC", "USD1"];
@@ -25,14 +22,12 @@ function Section({
   defaultOpen = false,
   children,
   bgImage,
-  disabled = false,
 }: {
   label: string;
   value: string;
   defaultOpen?: boolean;
   children: ReactNode;
   bgImage: string;
-  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -54,7 +49,6 @@ function Section({
   }, [open]);
 
   const handleMouseEnter = () => {
-    if (disabled) return;
     hoverTimerRef.current = setTimeout(() => setOpen(true), HOVER_DELAY_MS);
   };
 
@@ -74,9 +68,7 @@ function Section({
 
   return (
     <div
-      className={`group rounded-xl border border-white/10 bg-cover bg-center bg-no-repeat transition-colors duration-200 ${
-        disabled ? "opacity-50 pointer-events-none" : "hover:border-white/20"
-      }`}
+      className="group rounded-xl border border-white/10 bg-cover bg-center bg-no-repeat transition-colors duration-200 hover:border-white/20"
       style={{ backgroundImage: `url(${bgImage})` }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -124,8 +116,6 @@ function Section({
 }
 
 export function ControlsPanel() {
-  const { connected } = useWallet();
-  const { setVisible } = useWalletModal();
   const {
     currency,
     setCurrency,
@@ -141,18 +131,13 @@ export function ControlsPanel() {
     onResetAll,
   } = useGameState();
 
-  const { balance: walletSol, loading: walletLoading } = useSolBalance();
-
-  const displayBalance = connected && walletSol !== null ? walletSol : null;
-  const isDisabled = !connected;
-
   const step = currency === "SOL" ? 1 : 0.01;
   const formatCost = (n: number) => (n >= 1 ? n.toFixed(1) : n.toFixed(2));
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Balance */}
-      <div className={`min-w-0 ${isDisabled ? "opacity-50" : ""}`}>
+      {/* Balance — always visible */}
+      <div className="min-w-0">
         <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-white">
           Balance
         </label>
@@ -161,22 +146,20 @@ export function ControlsPanel() {
           style={{ backgroundImage: "url(/buttonbg1.png)" }}
         >
           <span className="shrink-0 whitespace-nowrap font-mono text-lg text-[var(--text-primary)]">
-            {!connected ? "—" : walletLoading ? "..." : displayBalance !== null ? formatCost(displayBalance) : "—"} {currency}
+            {formatCost(balance)} {currency}
           </span>
-          <div className={`flex min-w-0 gap-2 ${isDisabled ? "pointer-events-none" : ""}`}>
+          <div className="flex min-w-0 gap-2">
             <button
               type="button"
-              disabled={isDisabled}
               onClick={() => setBalance(balance + 5)}
-              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--accent)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-95 disabled:cursor-not-allowed"
+              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--accent)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-95"
             >
               +Deposit
             </button>
             <button
               type="button"
-              disabled={isDisabled}
               onClick={() => setBalance(Math.max(0, balance - 1))}
-              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-95 disabled:cursor-not-allowed"
+              className="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-95"
             >
               −Withdraw
             </button>
@@ -185,15 +168,14 @@ export function ControlsPanel() {
       </div>
 
       {/* Currency */}
-      <Section label="Currency" value={currency} bgImage="/buttonbg2.png" disabled={isDisabled}>
+      <Section label="Currency" value={currency} bgImage="/buttonbg2.png">
         <div className="flex gap-2">
           {CURRENCIES.map((c) => (
             <button
               key={c}
               type="button"
-              disabled={isDisabled}
               onClick={() => setCurrency(c)}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed ${
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90 active:scale-[0.98] ${
                 currency === c
                   ? "bg-[var(--accent)] text-black"
                   : "bg-zinc-700 text-[var(--text-muted)] hover:bg-zinc-600"
@@ -210,16 +192,14 @@ export function ControlsPanel() {
         label="Drill Cost"
         value={`${formatCost(averageDrillCost)} ${currency}`}
         bgImage="/buttonbg3.png"
-        disabled={isDisabled}
       >
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled={isDisabled}
             onClick={() =>
               setAverageDrillCost(Math.max(0.01, averageDrillCost - step))
             }
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-600 hover:opacity-90 active:scale-95 disabled:cursor-not-allowed"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-600 hover:opacity-90 active:scale-95"
           >
             −
           </button>
@@ -228,21 +208,19 @@ export function ControlsPanel() {
             min={0.01}
             max={1000}
             step={step}
-            disabled={isDisabled}
             value={averageDrillCost}
             onChange={(e) => {
               const v = parseFloat(e.target.value);
               if (!Number.isNaN(v)) setAverageDrillCost(v);
             }}
-            className="h-9 flex-1 rounded-lg border border-white/10 bg-zinc-700 px-3 text-center font-mono text-[var(--text-primary)] transition-colors duration-200 focus:border-[var(--accent)] focus:outline-none hover:border-white/20 disabled:cursor-not-allowed"
+            className="h-9 flex-1 rounded-lg border border-white/10 bg-zinc-700 px-3 text-center font-mono text-[var(--text-primary)] transition-colors duration-200 focus:border-[var(--accent)] focus:outline-none hover:border-white/20"
           />
           <button
             type="button"
-            disabled={isDisabled}
             onClick={() =>
               setAverageDrillCost(Math.min(1000, averageDrillCost + step))
             }
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-600 hover:opacity-90 active:scale-95 disabled:cursor-not-allowed"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-600 hover:opacity-90 active:scale-95"
           >
             +
           </button>
@@ -252,12 +230,11 @@ export function ControlsPanel() {
           min={0.01}
           max={10}
           step={0.01}
-          disabled={isDisabled}
           value={Math.min(10, averageDrillCost)}
           onChange={(e) =>
             setAverageDrillCost(parseFloat(e.target.value) || 0.01)
           }
-          className="mt-2 w-full accent-[var(--accent)] transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed"
+          className="mt-2 w-full accent-[var(--accent)] transition-opacity duration-200 hover:opacity-90"
         />
       </Section>
 
@@ -266,16 +243,14 @@ export function ControlsPanel() {
         label="Risk"
         value={RISK_LEVELS.find((r) => r.value === riskLevel)?.label || "Targeted (med)"}
         bgImage="/buttonbg4.png"
-        disabled={isDisabled}
       >
         <div className="flex flex-col gap-2">
           {RISK_LEVELS.map((risk) => (
             <button
               key={risk.value}
               type="button"
-              disabled={isDisabled}
               onClick={() => setRiskLevel(risk.value)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed ${
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90 active:scale-[0.98] ${
                 riskLevel === risk.value
                   ? "bg-[var(--accent)] text-black"
                   : "bg-zinc-700 text-[var(--text-muted)] hover:bg-zinc-600"
@@ -288,15 +263,14 @@ export function ControlsPanel() {
       </Section>
 
       {/* Grid Size */}
-      <Section label="Grid Size" value={`${gridSize}×${gridSize}`} bgImage="/buttonbg5.png" disabled={isDisabled}>
+      <Section label="Grid Size" value={`${gridSize}×${gridSize}`} bgImage="/buttonbg5.png">
         <div className="flex gap-2">
           {GRID_SIZES.map((s) => (
             <button
               key={s}
               type="button"
-              disabled={isDisabled}
               onClick={() => setGridSize(s)}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed ${
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90 active:scale-[0.98] ${
                 gridSize === s
                   ? "bg-[var(--accent)] text-black"
                   : "bg-zinc-700 text-[var(--text-muted)] hover:bg-zinc-600"
@@ -308,31 +282,19 @@ export function ControlsPanel() {
         </div>
       </Section>
 
-      {/* Connect Wallet / Mine All */}
-      {!connected ? (
-        <button
-          type="button"
-          onClick={() => setVisible(true)}
-          className="mt-2 rounded-lg bg-[var(--accent)] px-4 py-3 text-base font-semibold text-black transition-all duration-300 hover:opacity-90 active:scale-[0.98]"
-        >
-          Connect Wallet
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() => onMineAll?.()}
-          className="mt-2 rounded-lg px-4 py-3 text-base font-semibold text-black bg-white transition-all duration-300 hover:bg-gray-200 active:scale-[0.98]"
-        >
-          Mine All Tiles
-        </button>
-      )}
-      
+      {/* Mine All */}
+      <button
+        type="button"
+        onClick={() => onMineAll?.()}
+        className="mt-2 rounded-lg px-4 py-3 text-base font-semibold text-black bg-white transition-all duration-300 hover:bg-gray-200 active:scale-[0.98]"
+      >
+        Mine All Tiles
+      </button>
       {/* Reset All */}
       <button
         type="button"
-        disabled={isDisabled}
         onClick={() => onResetAll?.()}
-        className={`rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}
+        className="rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--text-primary)] transition-all duration-300 hover:bg-zinc-700 hover:opacity-90 active:scale-[0.98]"
       >
         Reset All
       </button>
