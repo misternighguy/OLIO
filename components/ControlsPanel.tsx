@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useGameState } from "@/lib/game-state";
 import { useSolBalance } from "@/lib/use-sol-balance";
 import type { Currency, GridSize, RiskLevel } from "@/lib/game-state";
@@ -23,12 +25,14 @@ function Section({
   defaultOpen = false,
   children,
   bgImage,
+  disabled = false,
 }: {
   label: string;
   value: string;
   defaultOpen?: boolean;
   children: ReactNode;
   bgImage: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -50,6 +54,7 @@ function Section({
   }, [open]);
 
   const handleMouseEnter = () => {
+    if (disabled) return;
     hoverTimerRef.current = setTimeout(() => setOpen(true), HOVER_DELAY_MS);
   };
 
@@ -69,7 +74,9 @@ function Section({
 
   return (
     <div
-      className="group rounded-xl border border-white/10 bg-cover bg-center bg-no-repeat transition-colors duration-200 hover:border-white/20"
+      className={`group rounded-xl border border-white/10 bg-cover bg-center bg-no-repeat transition-colors duration-200 ${
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:border-white/20"
+      }`}
       style={{ backgroundImage: `url(${bgImage})` }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -117,6 +124,8 @@ function Section({
 }
 
 export function ControlsPanel() {
+  const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
   const {
     currency,
     setCurrency,
@@ -134,12 +143,33 @@ export function ControlsPanel() {
 
   const { balance: walletSol, loading: walletLoading } = useSolBalance();
 
-  // When wallet is connected and currency is SOL, show on-chain balance
-  const displayBalance =
-    currency === "SOL" && walletSol !== null ? walletSol : balance;
+  const displayBalance = walletSol !== null ? walletSol : null;
 
   const step = currency === "SOL" ? 1 : 0.01;
   const formatCost = (n: number) => (n >= 1 ? n.toFixed(1) : n.toFixed(2));
+
+  // If wallet not connected, show connect prompt
+  if (!connected) {
+    return (
+      <div className="flex flex-col gap-3">
+        <div
+          className="flex min-w-0 flex-col items-center gap-4 rounded-lg bg-cover bg-center bg-no-repeat px-4 py-8"
+          style={{ backgroundImage: "url(/buttonbg1.png)" }}
+        >
+          <span className="text-sm text-[var(--text-muted)] text-center">
+            Connect your wallet to start drilling
+          </span>
+          <button
+            type="button"
+            onClick={() => setVisible(true)}
+            className="rounded-lg bg-[var(--accent)] px-6 py-3 text-base font-semibold text-black transition-all duration-300 hover:opacity-90 active:scale-[0.98]"
+          >
+            Connect Wallet
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -153,7 +183,7 @@ export function ControlsPanel() {
           style={{ backgroundImage: "url(/buttonbg1.png)" }}
         >
           <span className="shrink-0 whitespace-nowrap font-mono text-lg text-[var(--text-primary)]">
-            {walletLoading && currency === "SOL" ? "..." : formatCost(displayBalance)} {currency}
+            {walletLoading ? "..." : displayBalance !== null ? formatCost(displayBalance) : "—"} {currency}
           </span>
           <div className="flex min-w-0 gap-2">
             <button
