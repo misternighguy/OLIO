@@ -177,9 +177,14 @@ export function ControlsPanel() {
       <button
         type="button"
         onClick={() => onMineAll?.()}
-        className="order-1 mt-0 rounded-lg bg-white px-4 py-3 text-base font-semibold text-black transition-all duration-300 hover:bg-gray-200 active:scale-[0.98] lg:order-6 lg:mt-2"
+        className="order-1 mt-0 rounded-xl bg-gradient-to-r from-[var(--accent)] via-[#e2be6a] to-[var(--accent)] px-5 py-3.5 text-base font-bold uppercase tracking-wide text-black shadow-[0_0_20px_rgba(212,168,83,0.35)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,168,83,0.55)] hover:scale-[1.02] hover:brightness-110 active:scale-[0.97] active:shadow-[0_0_12px_rgba(212,168,83,0.25)] lg:order-6 lg:mt-2"
       >
-        Mine All Tiles
+        <span className="flex items-center justify-center gap-2">
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+          </svg>
+          Mine All Tiles
+        </span>
       </button>
       {/* Reset All — second on mobile */}
       <button
