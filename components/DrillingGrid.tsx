@@ -226,7 +226,21 @@ export function DrillingGrid() {
   if (tileCosts.length !== n) {
     return (
       <div className="mx-auto w-[90%] min-w-0 max-w-2xl">
-        <div className="mb-3 flex justify-end">
+        <div
+          className="grid gap-1.5 sm:gap-2 md:gap-3"
+          style={{
+            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+          }}
+        >
+          {Array.from({ length: n }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square animate-pulse rounded-full border-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url(/tilebg.png)" }}
+            />
+          ))}
+        </div>
+        <div className="mt-3 flex justify-end">
           <div className="flex items-center gap-4 rounded-lg bg-white/20 px-4 py-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-black">Attempts</span>
@@ -248,20 +262,6 @@ export function DrillingGrid() {
             </div>
           </div>
         </div>
-        <div
-          className="grid gap-1.5 sm:gap-2 md:gap-3"
-          style={{
-            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-          }}
-        >
-          {Array.from({ length: n }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square animate-pulse rounded-full border-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: "url(/tilebg.png)" }}
-            />
-          ))}
-        </div>
         <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
           Preparing field…
         </p>
@@ -271,7 +271,30 @@ export function DrillingGrid() {
 
   return (
     <div className="mx-auto w-[90%] min-w-0 max-w-2xl">
-      <div className="mb-3 flex justify-end">
+      <div
+        className="grid gap-1.5 sm:gap-2 md:gap-3"
+        style={{
+          gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+        }}
+      >
+        {tileCosts.map((cost, i) => (
+          <DrillTile
+            key={i}
+            cost={cost}
+            currency={currency}
+            outcome={outcomes[i]}
+            payout={payouts[i] ?? undefined}
+            motherlodePool={motherlodePool}
+            audioEnabled={audioEnabled}
+            affordable={balance - pendingCostRef.current >= cost}
+            insufficientBalanceShake={insufficientBalanceTile === i}
+            onDrill={() => drillTile(i)}
+            onReveal={() => handleTileReveal(i)}
+            disabled={outcomes[i] != null}
+          />
+        ))}
+      </div>
+      <div className="mt-3 flex justify-end">
         <div className="flex items-center gap-4 rounded-lg bg-white/20 px-4 py-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-black">Attempts</span>
@@ -296,29 +319,6 @@ export function DrillingGrid() {
             </span>
           </div>
         </div>
-      </div>
-      <div
-        className="grid gap-1.5 sm:gap-2 md:gap-3"
-        style={{
-          gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-        }}
-      >
-        {tileCosts.map((cost, i) => (
-          <DrillTile
-            key={i}
-            cost={cost}
-            currency={currency}
-            outcome={outcomes[i]}
-            payout={payouts[i] ?? undefined}
-            motherlodePool={motherlodePool}
-            audioEnabled={audioEnabled}
-            affordable={balance - pendingCostRef.current >= cost}
-            insufficientBalanceShake={insufficientBalanceTile === i}
-            onDrill={() => drillTile(i)}
-            onReveal={() => handleTileReveal(i)}
-            disabled={outcomes[i] != null}
-          />
-        ))}
       </div>
     </div>
   );

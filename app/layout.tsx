@@ -42,7 +42,7 @@ export default function RootLayout({
         />
         <div className="relative z-10 flex min-h-screen flex-1 flex-col min-h-0">
           <Header />
-          <main className="flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ease-out">
+          <main className="flex min-h-0 flex-1 flex-col overflow-auto transition-opacity duration-300 ease-out">
             {children}
           </main>
         </div>
