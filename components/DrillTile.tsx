@@ -1,44 +1,87 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { OutcomeType } from "@/lib/outcome-logic";
+import { playOutcomeSound } from "@/lib/audio";
+
+const DRILL_DURATIONS_MS = [250, 500, 750, 1000, 1250, 1500, 2000] as const;
+
+function pickDrillDuration(): number {
+  return DRILL_DURATIONS_MS[
+    Math.floor(Math.random() * DRILL_DURATIONS_MS.length)
+  ];
+}
+
+/**
+ * Build shake keyframes programmatically.
+ * - Shorter durations → fewer oscillations
+ * - Longer durations → more oscillations
+ * - Starts wide, progressively dampens to nearly still
+ * - Mostly horizontal, slight vertical
+ */
+function buildDrillKeyframes(durationMs: number): Keyframe[] {
+  const oscillations = Math.max(2, Math.round(durationMs / 120));
+  const maxX = 6; // px – peak horizontal
+  const maxY = 1.2; // px – peak vertical (much less)
+
+  const frames: Keyframe[] = [{ transform: "translate(0px, 0px)", offset: 0 }];
+
+  for (let i = 0; i < oscillations; i++) {
+    const progress = i / oscillations; // 0 → ~1
+    const dampen = 1 - progress * 0.8; // 1.0 → 0.2
+    const dir = i % 2 === 0 ? -1 : 1;
+    const x = dir * maxX * dampen;
+    const y = dir * maxY * dampen * (i % 3 === 0 ? -1 : 1);
+    frames.push({
+      transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`,
+      offset: (i + 1) / (oscillations + 1),
+    });
+  }
+
+  frames.push({ transform: "translate(0px, 0px)", offset: 1 });
+  return frames;
+}
 
 interface DrillTileProps {
   cost: number;
   currency: string;
   outcome?: OutcomeType | null;
+  payout?: number;
+  motherlodePool?: number;
+  audioEnabled?: boolean;
   onDrill: () => void;
+  onReveal?: () => void;
   disabled: boolean;
   affordable?: boolean;
   insufficientBalanceShake?: boolean;
 }
 
+const OUTCOME_BG_IMAGE: Record<OutcomeType, string> = {
+  dry: "/assets/no-oil.png",
+  oil: "/assets/oil-background.png",
+  refinery: "/assets/refinery-background.png",
+  motherlode: "/assets/motherlode.png",
+};
+
 const outcomeConfig: Record<
   OutcomeType,
-  { label: string; icon: string; className: string }
+  { label: string; textClass: string }
 > = {
   dry: {
     label: "Dry Hole",
-    icon: "✗",
-    className:
-      "bg-zinc-800/90 text-zinc-400 border-zinc-600/30 shadow-[inset_0_0_20px_rgba(0,0,0,0.3),0_0_8px_rgba(100,100,100,0.1)]",
+    textClass: "text-zinc-300",
   },
   oil: {
     label: "Oil Field",
-    icon: "◆",
-    className:
-      "bg-amber-950/80 text-amber-400 border-amber-700/40 shadow-[0_0_20px_rgba(251,191,36,0.2),inset_0_0_10px_rgba(251,191,36,0.05)]",
+    textClass: "text-amber-400",
   },
   refinery: {
     label: "Refinery",
-    icon: "◇",
-    className:
-      "bg-amber-900/70 text-amber-300 border-amber-600/50 shadow-[0_0_28px_rgba(251,191,36,0.35),0_0_12px_rgba(180,83,9,0.2)]",
+    textClass: "text-amber-300",
   },
   motherlode: {
     label: "Motherlode",
-    icon: "★",
-    className:
-      "bg-[var(--accent)]/20 text-[var(--accent)] border-[var(--accent)]/50 shadow-[0_0_32px_rgba(212,168,83,0.5),0_0_16px_rgba(212,168,83,0.25),inset_0_0_20px_rgba(212,168,83,0.1)]",
+    textClass: "text-[var(--accent)]",
   },
 };
 
@@ -46,62 +89,139 @@ export function DrillTile({
   cost,
   currency,
   outcome,
+  payout,
+  motherlodePool = 0,
+  audioEnabled = true,
   onDrill,
+  onReveal,
   disabled,
   affordable = true,
   insufficientBalanceShake = false,
 }: DrillTileProps) {
   const flipped = outcome != null;
-  const config = flipped ? outcomeConfig[outcome] : null;
+  const [revealed, setRevealed] = useState(false);
+  const outcomeKeyRef = useRef<OutcomeType | null>(null);
+  const drillDurationRef = useRef(250);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const revealedRef = useRef(false);
+  const onRevealRef = useRef(onReveal);
+  onRevealRef.current = onReveal;
+
+  useEffect(() => {
+    if (outcome == null) {
+      outcomeKeyRef.current = null;
+      revealedRef.current = false;
+      setRevealed(false);
+      return;
+    }
+
+    if (outcomeKeyRef.current !== outcome) {
+      outcomeKeyRef.current = outcome;
+      revealedRef.current = false;
+      setRevealed(false);
+      drillDurationRef.current = pickDrillDuration();
+    }
+
+    const ms = drillDurationRef.current;
+
+    // Programmatic shake via Web Animations API
+    let anim: Animation | undefined;
+    if (wrapperRef.current) {
+      anim = wrapperRef.current.animate(buildDrillKeyframes(ms), {
+        duration: ms,
+        easing: "ease-out",
+      });
+    }
+
+    const t = setTimeout(() => {
+      // Play sound at end of animation, when outcome is revealed
+      playOutcomeSound(outcome, audioEnabled, 0);
+      setRevealed(true);
+      if (!revealedRef.current) {
+        revealedRef.current = true;
+        onRevealRef.current?.();
+      }
+    }, ms);
+    return () => {
+      clearTimeout(t);
+      anim?.cancel();
+    };
+  }, [outcome, audioEnabled]);
+
+  const isDrilling = flipped && !revealed;
+  const config = flipped ? outcomeConfig[outcome!] : null;
   const unaffordable = !affordable && !flipped;
+
+  const payoutDisplay =
+    flipped && outcome != null && outcome !== "dry" && payout != null
+      ? (() => {
+          const fmt = (n: number) =>
+            n >= 1000 ? n.toLocaleString("en-US", { maximumFractionDigits: 0 })
+            : n >= 100 ? n.toFixed(0)
+            : n.toFixed(2);
+          return { text: `+${fmt(payout)}`, amount: payout };
+        })()
+      : null;
 
   return (
     <div
-      className={`aspect-square [perspective:400px] ${insufficientBalanceShake ? "animate-shake" : ""}`}
-      style={{ gridColumn: "span 1" }}
+      ref={wrapperRef}
+      className={`aspect-square ${insufficientBalanceShake ? "animate-shake" : ""}`}
+      style={{ gridColumn: "span 1", perspective: "800px" }}
     >
       <button
         type="button"
         onClick={onDrill}
         disabled={disabled}
-        className={`relative h-full w-full overflow-hidden rounded-xl border transition-transform duration-300 ease-out [transform-style:preserve-3d] ${
-          flipped
-            ? config!.className
+        className={`relative h-full w-full rounded-full border-0 bg-cover bg-center bg-no-repeat transition-all duration-300 ease-out ${
+          flipped && revealed
+            ? "overflow-hidden animate-tile-flip-in"
             : unaffordable
-              ? "cursor-not-allowed border-white/5 bg-white/[0.03] opacity-60"
-              : "cursor-pointer border-white/10 bg-[var(--bg-elevated)] hover:border-[var(--accent)]/50 hover:bg-white/5 hover:shadow-md active:scale-[0.98]"
+              ? "cursor-not-allowed opacity-60"
+              : "cursor-pointer hover:brightness-110 hover:shadow-md active:scale-[0.98]"
         }`}
-        style={{
-          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-        }}
+        style={
+          !flipped || isDrilling
+            ? { backgroundImage: "url(/tilebg.png)" }
+            : undefined
+        }
       >
-        {/* Front: cost */}
-        <div
-          className={`absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden] ${
-            flipped ? "invisible" : ""
-          }`}
-        >
-          <span className="font-mono text-sm font-medium text-[var(--text-primary)] sm:text-base">
-            {cost >= 1 ? cost.toFixed(1) : cost.toFixed(2)} {currency}
-          </span>
-        </div>
+        {/* Cost face — visible during idle & drilling */}
+        {(!flipped || isDrilling) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-mono text-sm font-semibold leading-tight text-black sm:text-base">
+              {cost >= 1 ? cost.toFixed(1) : cost.toFixed(2)}
+            </span>
+            <span className="font-mono text-[10px] uppercase leading-tight text-black sm:text-xs">
+              {currency}
+            </span>
+          </div>
+        )}
 
-        {/* Back: outcome (pre-rotated 180 so it shows when parent rotates) */}
-        <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-1 [backface-visibility:hidden] ${
-            flipped ? "" : "invisible"
-          }`}
-          style={{ transform: "rotateY(180deg)" }}
-        >
-          {config && (
-            <>
-              <span className="text-lg sm:text-xl">{config.icon}</span>
-              <span className="text-center text-xs font-medium sm:text-sm">
+        {/* Outcome face — appears after drilling, whole button flips */}
+        {flipped && revealed && config && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-contain bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${OUTCOME_BG_IMAGE[outcome!]})` }}
+          >
+            <div className="pointer-events-none absolute inset-0 bg-black/30" aria-hidden />
+            <div className={`relative z-10 flex flex-col items-center justify-center ${config.textClass}`}>
+              <span className="text-center text-[10px] font-bold leading-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] sm:text-xs">
                 {config.label}
               </span>
-            </>
-          )}
-        </div>
+              {payoutDisplay && (
+                <span className="mt-0.5 font-mono text-xs font-bold leading-tight text-emerald-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] sm:text-sm">
+                  {payoutDisplay.text.split(" ")[0]}
+                </span>
+              )}
+              {payoutDisplay && (
+                <span className="font-mono text-[9px] font-bold uppercase leading-tight text-emerald-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] sm:text-[10px]">
+                  {currency}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </button>
     </div>
   );

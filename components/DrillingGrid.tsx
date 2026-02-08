@@ -1,95 +1,211 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useGameState } from "@/lib/game-state";
-import {
-  generateTileCosts,
-  getOutcome,
-  getPayout,
-  type OutcomeType,
-} from "@/lib/outcome-logic";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useGameState, riskLevelToVolatility } from "@/lib/game-state";
+import { generateTileCosts, type OutcomeType } from "@/lib/outcome-logic";
+import { useSolPrice } from "@/lib/use-sol-price";
 import { DrillTile } from "./DrillTile";
 
 export function DrillingGrid() {
   const {
     gridSize,
     averageDrillCost,
-    volatility,
+    riskLevel,
     currency,
     balance,
+    audioEnabled,
+    setAudioEnabled,
     updateSession,
     setOnMineAll,
     setOnResetAll,
     resetSession,
     triggerMotherlode,
+    motherlodePool,
   } = useGameState();
+
+  const { price: solPrice } = useSolPrice();
 
   const [tileCosts, setTileCosts] = useState<number[]>([]);
   const [outcomes, setOutcomes] = useState<(OutcomeType | null)[]>([]);
+  const [payouts, setPayouts] = useState<(number | null)[]>([]);
   const [insufficientBalanceTile, setInsufficientBalanceTile] = useState<
     number | null
   >(null);
+  // Track costs reserved by tiles still animating (prevents double-spending)
+  const pendingCostRef = useRef(0);
+  // Store pending pnl per tile index so we can apply on reveal
+  const pendingPnlRef = useRef<Map<number, number>>(new Map());
+  // Track staggered timeouts from Mine All so we can cancel on reset
+  const mineAllTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const n = gridSize * gridSize;
 
   const regenerateCosts = useCallback(() => {
     setInsufficientBalanceTile(null);
+    pendingCostRef.current = 0;
+    pendingPnlRef.current.clear();
+    mineAllTimersRef.current.forEach(clearTimeout);
+    mineAllTimersRef.current = [];
+    const volatility = riskLevelToVolatility(riskLevel);
     setTileCosts(generateTileCosts(gridSize, averageDrillCost, volatility));
     setOutcomes(Array(n).fill(null));
-  }, [gridSize, averageDrillCost, volatility, n]);
+    setPayouts(Array(n).fill(null));
+  }, [gridSize, averageDrillCost, riskLevel, n]);
 
   useEffect(() => {
     regenerateCosts();
   }, [regenerateCosts]);
 
   const drillTile = useCallback(
-    (index: number) => {
+    async (index: number) => {
       if (outcomes[index] != null) return;
       const cost = tileCosts[index];
-      if (balance < cost) {
+      const availableBalance = balance - pendingCostRef.current;
+      if (availableBalance < cost) {
         setInsufficientBalanceTile(index);
         setTimeout(() => setInsufficientBalanceTile(null), 500);
         return;
       }
 
-      const outcome = getOutcome();
-      const payout = getPayout(cost, outcome);
-      const pnl = payout - cost;
+      // Reserve cost so rapid clicks can't overdraft
+      pendingCostRef.current += cost;
 
-      setOutcomes((prev) => {
-        const next = [...prev];
-        next[index] = outcome;
-        return next;
-      });
-      updateSession(pnl, 1);
-      if (outcome === "motherlode") triggerMotherlode(payout);
+      // Convert to USD for motherlode calculation
+      const usdRate = currency === "SOL" ? (solPrice ?? 0) : 1;
+      const betUSD = cost * usdRate;
+      const motherlodePoolUSD = motherlodePool * usdRate;
+
+      try {
+        const response = await fetch("/api/drill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cost,
+            riskLevel,
+            motherlodePool,
+            betUSD,
+            motherlodePoolUSD,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const { outcome, payout } = data;
+        const pnl = payout - cost;
+
+        pendingPnlRef.current.set(index, pnl);
+
+        setOutcomes((prev) => {
+          const next = [...prev];
+          next[index] = outcome;
+          return next;
+        });
+        setPayouts((prev) => {
+          const next = [...prev];
+          next[index] = payout;
+          return next;
+        });
+        if (outcome === "motherlode") triggerMotherlode(payout);
+      } catch (error) {
+        console.error("[DrillingGrid] Drill API error:", error);
+        // Release reserved cost on error
+        pendingCostRef.current = Math.max(0, pendingCostRef.current - cost);
+        // Show error state (for now just log; could show a notification)
+      }
     },
-    [outcomes, tileCosts, balance, updateSession, triggerMotherlode]
+    [outcomes, tileCosts, balance, motherlodePool, riskLevel, currency, solPrice, triggerMotherlode]
+  );
+
+  const handleTileReveal = useCallback(
+    (index: number) => {
+      const pnl = pendingPnlRef.current.get(index);
+      if (pnl == null) return;
+      const cost = tileCosts[index];
+      pendingCostRef.current = Math.max(0, pendingCostRef.current - cost);
+      pendingPnlRef.current.delete(index);
+      updateSession(pnl, 1);
+    },
+    [tileCosts, updateSession]
   );
 
   const mineAll = useCallback(() => {
+    // Clear any in-flight stagger timers from a previous Mine All
+    mineAllTimersRef.current.forEach(clearTimeout);
+    mineAllTimersRef.current = [];
+
+    // Gather unflipped tile indices
     const unflipped: number[] = [];
     for (let i = 0; i < n; i++) {
       if (outcomes[i] == null) unflipped.push(i);
     }
 
-    let totalPnl = 0;
-    const newOutcomes = [...outcomes];
-
+    // Figure out how many tiles we can afford (reserve costs up front to prevent overdraft)
+    let runningCost = pendingCostRef.current;
+    const affordableIndices: number[] = [];
     for (const i of unflipped) {
       const cost = tileCosts[i];
-      if (balance + totalPnl < cost) break;
-
-      const outcome = getOutcome();
-      const payout = getPayout(cost, outcome);
-      totalPnl += payout - cost;
-      newOutcomes[i] = outcome;
-      if (outcome === "motherlode") triggerMotherlode(payout);
+      if (balance - runningCost < cost) break;
+      runningCost += cost;
+      affordableIndices.push(i);
     }
+    // Reserve all costs now so single-clicks during cascade can't overdraft
+    pendingCostRef.current = runningCost;
 
-    setOutcomes(newOutcomes);
-    updateSession(totalPnl, unflipped.length);
-  }, [n, outcomes, tileCosts, balance, updateSession, triggerMotherlode]);
+    // Convert to USD for motherlode calculation
+    const usdRate = currency === "SOL" ? (solPrice ?? 0) : 1;
+    const motherlodePoolUSD = motherlodePool * usdRate;
+
+    // Stagger each tile — outcome determined live when its timer fires
+    const STAGGER_MS = 100;
+    affordableIndices.forEach((tileIndex, order) => {
+      const timer = setTimeout(async () => {
+        const cost = tileCosts[tileIndex];
+        const betUSD = cost * usdRate;
+
+        try {
+          const response = await fetch("/api/drill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cost,
+              riskLevel,
+              motherlodePool,
+              betUSD,
+              motherlodePoolUSD,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          const { outcome, payout } = data;
+          const pnl = payout - cost;
+
+          pendingPnlRef.current.set(tileIndex, pnl);
+
+          setOutcomes((prev) => {
+            const next = [...prev];
+            next[tileIndex] = outcome;
+            return next;
+          });
+          setPayouts((prev) => {
+            const next = [...prev];
+            next[tileIndex] = payout;
+            return next;
+          });
+          if (outcome === "motherlode") triggerMotherlode(payout);
+        } catch (error) {
+          console.error("[DrillingGrid] Mine All drill error:", error);
+        }
+      }, order * STAGGER_MS);
+      mineAllTimersRef.current.push(timer);
+    });
+  }, [n, outcomes, tileCosts, balance, motherlodePool, riskLevel, currency, solPrice, triggerMotherlode]);
 
   const handleResetAll = useCallback(() => {
     regenerateCosts();
@@ -118,7 +234,8 @@ export function DrillingGrid() {
           {Array.from({ length: n }).map((_, i) => (
             <div
               key={i}
-              className="aspect-square animate-pulse rounded-xl border border-white/10 bg-white/5"
+              className="aspect-square animate-pulse rounded-full border-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url(/tilebg.png)" }}
             />
           ))}
         </div>
@@ -130,7 +247,7 @@ export function DrillingGrid() {
   }
 
   return (
-    <div className="w-full min-w-0 max-w-2xl">
+    <div className="mx-auto w-[90%] min-w-0 max-w-2xl">
       <div
         className="grid gap-1.5 sm:gap-2 md:gap-3"
         style={{
@@ -143,16 +260,17 @@ export function DrillingGrid() {
             cost={cost}
             currency={currency}
             outcome={outcomes[i]}
-            affordable={balance >= cost}
+            payout={payouts[i] ?? undefined}
+            motherlodePool={motherlodePool}
+            audioEnabled={audioEnabled}
+            affordable={balance - pendingCostRef.current >= cost}
             insufficientBalanceShake={insufficientBalanceTile === i}
             onDrill={() => drillTile(i)}
+            onReveal={() => handleTileReveal(i)}
             disabled={outcomes[i] != null}
           />
         ))}
       </div>
-      <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
-        Click tiles to drill • Grid size: {gridSize}×{gridSize}
-      </p>
     </div>
   );
 }

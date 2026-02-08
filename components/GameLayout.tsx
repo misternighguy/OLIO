@@ -2,6 +2,8 @@
 
 import { GameProvider, useGameState } from "@/lib/game-state";
 import { MotherlodeOverlay } from "@/components/MotherlodeOverlay";
+import { LoadingSound } from "@/components/LoadingSound";
+import { AudioShortcut } from "@/components/AudioShortcut";
 import type { ReactNode } from "react";
 
 function MotherlodeGate() {
@@ -24,8 +26,10 @@ function MotherlodeGate() {
 export function GameLayout({ children }: { children: ReactNode }) {
   return (
     <GameProvider>
+      <LoadingSound />
+      <AudioShortcut />
       <MotherlodeGate />
-      <div className="grid min-h-[calc(100vh-3.5rem)] grid-cols-1 overflow-x-hidden lg:grid-cols-[minmax(240px,280px)_1fr_minmax(240px,280px)]">
+      <div className="grid flex-1 min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(240px,280px)_1fr_minmax(240px,280px)] lg:items-stretch">
         {children}
       </div>
     </GameProvider>
@@ -34,7 +38,7 @@ export function GameLayout({ children }: { children: ReactNode }) {
 
 export function LeftPanel({ children }: { children: ReactNode }) {
   return (
-    <aside className="min-w-0 overflow-y-auto border-r border-white/5 bg-[var(--bg-elevated)]/50 p-4 lg:p-6">
+    <aside className="min-w-0 self-stretch overflow-y-auto border-r border-white/10 bg-white/10 backdrop-blur-[1px] p-4 lg:p-6">
       {children}
     </aside>
   );
@@ -50,7 +54,7 @@ export function CenterPanel({ children }: { children: ReactNode }) {
 
 export function RightPanel({ children }: { children: ReactNode }) {
   return (
-    <aside className="flex min-w-0 flex-col overflow-y-auto border-l border-white/5 bg-[var(--bg-elevated)]/50 p-4 lg:p-6">
+    <aside className="flex min-w-0 flex-col self-stretch overflow-y-auto border-l border-white/10 bg-white/10 backdrop-blur-[1px] p-4 lg:p-6">
       {children}
     </aside>
   );

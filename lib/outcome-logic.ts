@@ -1,41 +1,106 @@
 /**
  * Tile cost generation and outcome logic for OIL Drilling.
  * From spec: min=max(0.01,0.04A) at v=1, max=min(1000,4A) at v=1.
- * Outcomes: Dry Hole 69.84%, Oil Field 24%, Refinery 6%, Motherlode 0.16%.
+ *
+ * Risk-based probabilities (tuned for -15% EV):
+ *   Strategic (low):   Dry 60.71%, Oil 34.29% (1.75x), Refinery 5.00% (5x)
+ *   Targeted (medium): Dry 72.00%, Oil 26.00% (2.5x),  Refinery 2.00% (10x)
+ *   Random (high):     Dry 82.88%, Oil 15.62% (4x),    Refinery 1.50% (15x)
+ *   Motherlode: dynamic probability (bet_usd / 3) / motherlode_pool_usd
  */
 
 export type OutcomeType = "dry" | "oil" | "refinery" | "motherlode";
+export type RiskLevel = "strategic" | "targeted" | "random";
 
-const OUTCOME_WEIGHTS: { outcome: OutcomeType; weight: number }[] = [
-  { outcome: "dry", weight: 69.84 },
-  { outcome: "oil", weight: 24 },
-  { outcome: "refinery", weight: 6 },
-  { outcome: "motherlode", weight: 0.16 },
-];
+interface RiskConfig {
+  probabilities: {
+    dry: number;
+    oil: number;
+    refinery: number;
+  };
+  payouts: {
+    oil: number;
+    refinery: number;
+  };
+}
 
-export function getOutcome(): OutcomeType {
+const RISK_CONFIG: Record<RiskLevel, RiskConfig> = {
+  strategic: {
+    probabilities: { dry: 60.71, oil: 34.29, refinery: 5.0 },
+    payouts: { oil: 1.75, refinery: 5.0 },
+  },
+  targeted: {
+    probabilities: { dry: 72.0, oil: 26.0, refinery: 2.0 },
+    payouts: { oil: 2.5, refinery: 10.0 },
+  },
+  random: {
+    probabilities: { dry: 82.88, oil: 15.62, refinery: 1.5 },
+    payouts: { oil: 4.0, refinery: 15.0 },
+  },
+};
+
+/**
+ * Determine outcome based on risk level (dry/oil/refinery only).
+ * Motherlode is rolled separately with dynamic probability.
+ */
+export function getOutcome(riskLevel: RiskLevel): OutcomeType {
+  const config = RISK_CONFIG[riskLevel];
   const r = Math.random() * 100;
-  let cumulative = 0;
-  for (const { outcome, weight } of OUTCOME_WEIGHTS) {
-    cumulative += weight;
-    if (r < cumulative) return outcome;
+
+  if (r < config.probabilities.dry) return "dry";
+  if (r < config.probabilities.dry + config.probabilities.oil) return "oil";
+  if (r < config.probabilities.dry + config.probabilities.oil + config.probabilities.refinery) {
+    return "refinery";
   }
   return "dry";
 }
 
-export function getPayout(cost: number, outcome: OutcomeType): number {
+/**
+ * Calculate payout for a given outcome.
+ * @param cost        The tile's drill cost
+ * @param outcome     The outcome type
+ * @param riskLevel   Risk level (determines multipliers)
+ * @param motherlodePool  Current motherlode reserve (needed for motherlode payout)
+ */
+export function getPayout(
+  cost: number,
+  outcome: OutcomeType,
+  riskLevel: RiskLevel,
+  motherlodePool?: number
+): number {
+  const config = RISK_CONFIG[riskLevel];
   switch (outcome) {
     case "dry":
       return 0;
     case "oil":
-      return cost * 1.5;
+      return cost * config.payouts.oil;
     case "refinery":
-      return cost * 4;
+      return cost * config.payouts.refinery;
     case "motherlode":
-      return cost * 50; // mock jackpot multiplier
+      return (motherlodePool ?? 0) * 0.8;
     default:
       return 0;
   }
+}
+
+/**
+ * Calculate motherlode probability dynamically based on bet size and pool.
+ * P(motherlode) = (bet_usd / 3) / motherlode_pool_usd
+ * Clamped to [0, 0.01] to avoid degenerate cases.
+ */
+export function getMotherlodeProbability(betUSD: number, motherlodePoolUSD: number): number {
+  if (motherlodePoolUSD <= 0) return 0;
+  const prob = (betUSD / 3) / motherlodePoolUSD;
+  return Math.max(0, Math.min(0.01, prob));
+}
+
+/**
+ * Roll for motherlode separately (after main outcome).
+ * Returns true if motherlode is hit.
+ */
+export function rollMotherlode(betUSD: number, motherlodePoolUSD: number): boolean {
+  const prob = getMotherlodeProbability(betUSD, motherlodePoolUSD);
+  return Math.random() < prob;
 }
 
 /**
