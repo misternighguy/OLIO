@@ -8,7 +8,6 @@ import {
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { BackpackWalletAdapter } from "@solana/wallet-adapter-backpack";
-import { clusterApiUrl } from "@solana/web3.js";
 
 // Import wallet adapter styles
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -18,8 +17,14 @@ interface WalletProviderProps {
 }
 
 export function WalletProvider({ children }: WalletProviderProps) {
-  // Use mainnet-beta for production
-  const endpoint = useMemo(() => clusterApiUrl("mainnet-beta"), []);
+  const endpoint = useMemo(() => {
+    const rpc = process.env.NEXT_PUBLIC_RPC_URL;
+    if (!rpc) {
+      console.warn("NEXT_PUBLIC_RPC_URL not set, using public mainnet (rate-limited)");
+      return "https://api.mainnet-beta.solana.com";
+    }
+    return rpc;
+  }, []);
 
   // Configure wallets: Phantom, Backpack, Jupiter (via wallet standard)
   const wallets = useMemo(
